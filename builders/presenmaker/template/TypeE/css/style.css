@@ -1,0 +1,116 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	background:#aa9975 url(../img/haikei.png) no-repeat top;
+	color:#0f0f0f;
+}
+.imgshadow{
+    background: #ccc;
+    position:relative;
+    box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -moz-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -webkit-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+}
+
+#ContentsArea {
+	width:96%;
+	margin:0 auto;
+}
+#HeaderArea {
+	width:100%;
+}
+
+#HeaderArea #ShisetsuNameArea {
+	margin:36px 0;
+}
+#HeaderArea #ShisetsuNameArea h1 {
+	max-width:100%;
+	padding:30px 90px;
+	font-size:41px;
+	text-align:center;
+	background:url(../img/shisetsumei_haikei.png) center repeat-y;
+	background-size:contain;
+	line-height:1.2;
+}
+#HeaderArea img {
+	max-width:100%;
+	height:auto;
+	border:none;
+	margin-bottom:12px;
+	padding:0;
+	border:3px #c1a759 solid;
+}
+#HeaderArea #ShisetsuNameArea img {
+	max-width:100%;
+	height:auto;
+	vertical-align:bottom;
+	margin:0;
+	padding:0;
+	border:none;
+}
+
+#HeaderArea p {
+	font-size:24px;
+	line-height:1.4;
+}
+#HeaderArea_bottom_line img {
+	max-width:100%;
+	height:auto;
+}
+.categorytitle {
+	width:96%;
+	text-align:center;
+	margin:38px auto 28px auto;
+}
+.categorytitle img {
+	max-width:100%;
+	height:auto;
+}
+.section {
+	margin:0 auto 26px auto;
+	background:url(../img/se_haikei.png) bottom repeat-y;
+}
+
+.section_contents {
+	overflow:hidden;
+	padding:14px;
+}
+
+.se_ph {
+	width:63%;
+	text-align:center;
+}
+.se_ph img {
+	border:2px #f8f3c7 solid;
+}
+.se_text {
+	width:33%;
+	text-align:center;
+	color:#FFF;
+	padding-top:10%;
+	line-height:1.4;	
+}
+.se_text h3 {
+	font-size:21px;
+	font-weight:bold;
+	width:max-width:100%;
+	background:url(../img/se_text_haikei.png) center bottom no-repeat;
+	background-size:contain;
+	padding-bottom:1em;
+	margin-bottom:12px;
+}
+.se_text p {
+	font-size:19px;
+	padding-bottom:14px;
+}
+.ph_right .se_text {
+	padding-left:8px;
+}
+.ph_left .se_text {
+	padding-right:8px;
+}
+#Map {
+	width:96%;
+	margin:0 auto;
+}

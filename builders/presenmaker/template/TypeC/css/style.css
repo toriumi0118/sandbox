@@ -1,0 +1,133 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	background:url(../img/haikei.jpg);
+	color:#685531;
+}
+.imgshadow{
+    background: #ccc;
+    position:relative;
+    box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -moz-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -webkit-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+}
+
+#ContentsArea {
+	width:100%;
+}
+#HeaderContents {
+	background:url(../img/main_haikei.gif);
+	padding-top:26px;
+}
+#HeaderArea {
+	width:96%;
+	/*padding-bottom:13px;*/
+	margin:0 auto;
+}
+#HeaderArea h1 {
+	max-width:100%;
+	margin:9px 0 36px 0;
+	font-size:41px;
+	color:#533217;
+}
+#HeaderArea img {
+	max-width:100%;
+	height:auto;
+	border:none;
+	margin-bottom:12px;
+	border-radius:4px;
+	padding:0;
+}
+#HeaderArea p {
+	font-size:24px;
+	line-height:1.4;
+}
+#HeaderArea_bottom_line img {
+	max-width:100%;
+	height:auto;
+}
+.categorytitle {
+	width:96%;
+	text-align:center;
+	margin:38px auto 26px auto;
+}
+.categorytitle img {
+	max-width:100%;
+	height:auto;
+}
+.section {
+	width:96%;
+	margin:0 auto 26px auto;
+	
+}
+.section_contents {
+	border-radius:4px;
+	padding:12px;
+	overflow:hidden;
+	margin-bottom:24px;
+}
+
+.ph_short .se_ph {
+	width:32%;
+}
+.ph_short .se_text {
+	width:65%;
+}
+
+.ph_logn .se_ph {
+	width:65%;
+}
+.ph_logn .se_text {
+	width:32%;
+}
+/* セクションの背景色 */
+.haikei_yellow {background:#eadebb;}
+.haikei_green {background:#e0e2b2;}
+.haikei_blue {background:#c9e0ea;}
+.haikei_red {background:#f1d7c9;}
+
+/* セクションの背景色 ワンポイントイメージ有り 左版 */
+.haikei_yellow_img_left {background:#eadebb url(../img/se_haikei1.png) no-repeat 50% 95%;}
+.haikei_green_img_left {background:#e0e2b2 url(../img/se_haikei1.png) no-repeat 50% 95%;}
+.haikei_blue_img_left {background:#c9e0ea url(../img/se_haikei1.png) no-repeat 50% 95%;}
+.haikei_red_img_left {background:#f1d7c9 url(../img/se_haikei1.png) no-repeat 50% 95%;}
+
+/* セクションの背景色 ワンポイントイメージ有り 右版 */
+.haikei_yellow_img_right {background:#eadebb url(../img/se_haikei1.png) no-repeat 96% 93%;}
+.haikei_green_img_right {background:#e0e2b2 url(../img/se_haikei1.png) no-repeat 96% 93%;}
+.haikei_blue_img_right {background:#c9e0ea url(../img/se_haikei1.png) no-repeat 96% 93%;}
+.haikei_red_img_right {background:#f1d7c9 url(../img/se_haikei1.png) no-repeat 96% 93%;}
+
+
+.se_ph img {
+	border-radius:4px;
+}
+.se_text {
+	padding-top:5px;
+}
+.se_text h3 {
+	font-size:24px;
+	font-weight:bold;
+	padding-bottom:7px;
+	margin-bottom:13px;
+	color:#533217;
+}
+.se_text p {
+	font-size:21px;
+	line-height:1.4;
+}
+
+.ph_right .se_text {
+	padding-left:6px;
+}
+
+.section .bottomi_line {
+	max-width:100%;
+	height:auto;
+}
+
+#Map {
+	width:96%;
+	margin:0 auto;
+}

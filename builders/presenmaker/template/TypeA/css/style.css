@@ -1,0 +1,91 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	background:url(../img/haikei.gif);
+}
+.imgshadow{
+    background: #ccc;
+    position:relative;
+    box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -moz-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -webkit-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+}
+
+#ContentsArea {
+	width:96%;
+	margin:0 auto;
+}
+#HeaderArea {
+	width:100%;
+	background:url(../img/mainarea_bottom_line.png) no-repeat bottom;
+	padding-bottom:13px;
+	margin-bottom:26px;
+}
+#HeaderArea h1 {
+	max-width:100%;
+	background:url(../img/shisetsumei.png) no-repeat bottom right;
+	padding:23px 90px 26px 0;
+	margin:26px 0 26px 0;
+	font-size:48px;
+}
+#HeaderArea img {
+	max-width:100%;
+	height:auto;
+	display:block;
+	margin-bottom:26px;
+}
+#HeaderArea p {
+	font-size:24px;
+	line-height:1.4;
+}
+.categorytitle {
+	margin:38px 0 26px 0;
+}
+.section {
+	width:96%;
+	margin:0 auto 26px auto;
+	overflow:hidden;
+}
+
+.ph_left .se_ph {
+	width:65%;
+	text-align:right;
+	background:url(../img/se_haikei1.png) no-repeat bottom left;
+	-webkit-background-size:28% auto;
+}
+.ph_left .se_text {
+	width:32%;
+}
+
+.ph_right .se_ph {
+	width:65%;
+	text-align:left;
+	background:url(../img/se_haikei2.png) no-repeat bottom right;
+	-webkit-background-size:28% auto;
+}
+.ph_right .se_text {
+	width:32%;
+}
+
+
+.se_text {
+	padding-top:3px;
+}
+
+.se_text h3 {
+	font-size:24px;
+	font-weight:bold;
+	padding-bottom:7px;
+	margin-bottom:13px;
+	border-bottom:5px #2d89b0 solid;
+}
+.se_text p {
+	font-size:21px;
+	line-height:1.4;
+}
+
+#Map {
+	width:96%;
+	margin:0 auto;
+}

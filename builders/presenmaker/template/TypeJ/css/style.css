@@ -1,0 +1,146 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	background:#e1f0d9;
+	color:#448e0e;
+}
+.imgshadow{
+    background: #ccc;
+    position:relative;
+    box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -moz-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -webkit-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+}
+
+#ContentsArea {
+	width:92%;
+	margin:0 auto;
+	background:#FFF;
+	border-radius:4px;
+	padding:16px;
+	margin-top:24px;
+}
+#HeaderArea {
+	width:100%;
+	margin-bottom:72px;
+}
+
+#HeaderArea h1 {
+	max-width:100%;
+	margin:22px 0 36px;
+	font-size:41px;
+	background-size:contain;
+}
+#HeaderArea img {
+	max-width:100%;
+	height:auto;
+	border:none;
+	margin-bottom:12px;
+	padding:0;
+	border:3px #47930e solid;
+}
+
+#HeaderArea p {
+	padding-top:12px;
+	font-size:24px;
+	line-height:1.4;
+	color:#333;
+}
+#HeaderArea_bottom_line img {
+	max-width:100%;
+	height:auto;
+}
+.categorytitle {
+	width:100%;
+	margin:38px auto 28px auto;
+	border-bottom:1px #FFF solid;
+	padding-bottom:12px;
+}
+.categorytitle img {
+	max-width:100%;
+	height:auto;
+}
+.section {
+	width:100%;
+	margin:0 auto 36px auto;
+}
+.section_contents {
+	overflow:hidden;
+	width:100%;
+	position:relative;
+	background:#e5f3de;
+	padding:0;
+}
+.section_contents .migiue,
+.section_contents .hidarishita{
+	display:block;
+	position:absolute;
+}
+.section_contents .migiue {
+	top:0;
+	left:0;
+}
+.section_contents .hidarishita {
+	bottom:0;
+	right:0;
+}
+
+.se_ph_right_long .se_text,
+.se_ph_left_long .se_text {
+	width:31%;
+}
+
+.se_ph_right_long .se_ph,
+.se_ph_left_long .se_ph {
+	width:65%;
+}
+
+.se_ph_right_short .se_text,
+.se_ph_left_short .se_text {
+	width:62%;
+}
+
+.se_ph_right_short .se_ph,
+.se_ph_left_short .se_ph {
+	width:33%;
+}
+
+.se_ph_right_long .se_text,
+.se_ph_right_short .se_text {
+	margin-left:14px;
+}
+.se_ph_left_long .se_text,
+.se_ph_left_short .se_text {
+	margin-right:14px;
+}
+
+.se_ph {
+	margin-bottom:2px;
+}
+
+.se_ph img {
+	max-width:100%;
+	height:auto;
+}
+.se_text {
+	margin-top:12%;
+}
+.se_text h3 {
+	max-width:100%;
+	padding:0 0 18px 0;
+	font-size:21px;
+	font-weight:bold;
+	margin-bottom:10px;
+	background:url(../img/se_title_img.png) left bottom repeat-x;
+}
+.se_text p {
+	font-size:19px;
+	line-height:1.4;
+}
+
+
+#Map {
+	width:100%;
+	margin:0 auto;
+}

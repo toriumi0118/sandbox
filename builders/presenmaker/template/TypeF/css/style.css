@@ -1,0 +1,98 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	background:#40241a url(../img/haikei.png);
+	color:#FFF;
+}
+.imgshadow{
+    background: #ccc;
+    position:relative;
+    box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -moz-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+    -webkit-box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.36);
+}
+
+#ContentsArea {
+	width:96%;
+	margin:0 auto;
+}
+#HeaderArea {
+	width:100%;
+	margin-bottom:72px;
+}
+
+#HeaderArea h1 {
+	max-width:100%;
+	margin:36px 0;
+	font-size:41px;
+	background-size:contain;
+}
+#HeaderArea img {
+	max-width:100%;
+	height:auto;
+	border:none;
+	margin-bottom:12px;
+	padding:0;
+}
+
+#HeaderArea p {
+	padding-top:12px;
+	font-size:24px;
+	line-height:1.4;
+}
+#HeaderArea_bottom_line img {
+	max-width:100%;
+	height:auto;
+}
+.categorytitle {
+	width:96%;
+	margin:38px auto 28px auto;
+	border-bottom:1px #FFF solid;
+	padding-bottom:12px;
+}
+.categorytitle img {
+	max-width:100%;
+	height:auto;
+}
+.section {
+	width:96%;
+	margin:0 auto 36px auto;
+}
+
+
+.se_ph {
+	width:100%;
+	text-align:center;
+	background:url(../img/se_haikei.png);
+	margin-bottom:2px;
+	padding:24px 0;
+}
+
+.se_ph img {
+	max-width:100%;
+	height:auto;
+}
+
+.se_text {
+	width:100%;
+	color:#160903;
+	background:#f4f4f4;
+}
+.se_text h3 {
+	padding:30px 30px 10px 30px;
+	font-size:21px;
+	font-weight:bold;
+	margin-bottom:10px;
+}
+.se_text p {
+	width:90%;
+	font-size:19px;
+	line-height:1.4;
+	padding:0px 30px 30px 30px;
+}
+
+#Map {
+	width:96%;
+	margin:0 auto;
+}

@@ -1,0 +1,21 @@
+template = C
+office_name=鳥海事業所
+main_ph=main.png
+main_txt=鳥海事業所のタイトルがここにきます。
+
+ph0_title=ph0のタイトルです。(right)
+ph0_txt=三人組（説明テキストです。）
+ph0_direction=right
+# yellow, green, blue, redが可能
+ph0_backcolor=yellow
+# left, right, 設定しないが可能
+ph0_backimg=left
+
+ph1_title=ph1のタイトルです。(left)
+ph1_direction=left
+ph1_backcolor=green
+ph1_backimg=left
+
+ph2_title=ph2のタイトルです。(right,縦長)
+ph2_direction=right
+ph2_backcolor=red

@@ -1,0 +1,10 @@
+*.csv
+!40FUKUOK.CSV
+__pycache__/*
+*.swp
+.~lock*
+*.log
+img/
+*.html
+database.json
+/output

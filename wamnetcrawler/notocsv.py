@@ -1,4 +1,8 @@
+#! /bin/env python
 #! -*- coding: utf-8 -*-
+"""入力された事業所番号一覧からwamnetの情報を取得します
+"""
+
 import sys
 import csv
 import codecs
@@ -17,6 +21,9 @@ def re_create(no, clazz, vCd):
 
 
 def main():
+    if len(sys.argv) == 1:
+        print("Usage: {} input.csv [DAY|KYOTAKU]".format(sys.argv[0]))
+        exit()
     if len(sys.argv) < 2:
         print("input fileを引数に渡してください")
         exit()

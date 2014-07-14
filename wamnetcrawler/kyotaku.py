@@ -1,4 +1,7 @@
 #! coding: utf-8 
+"""wamnetから居宅情報を取得する
+"""
+
 import sys
 import re
 import unicodedata

@@ -1,4 +1,7 @@
 #! coding: utf-8
+"""福岡の情報を解析するためのスクリプト
+"""
+
 import csv
 import re
 import env
@@ -25,7 +28,7 @@ class Fukuoka:
                     self.srv_other.append(row[0])
 
     def address_of(self, zip_code):
-        z = zip_code.replace("〒", "").replace("ー", "").replace("-", "")
+        z = zip_code.replace("〒", "").replace("ー", "").replace("-", "").replace("―","")
         for row in self.content:
            if z != row[2]:
                 continue
@@ -33,7 +36,7 @@ class Fukuoka:
            return s.replace("福岡市", "")
     
     def district_of(self, zip_code):
-        z = zip_code.replace("〒", "").replace("ー", "").replace("-", "")
+        z = zip_code.replace("〒", "").replace("ー", "").replace("-", "").replace("―","")
         for row in self.content:
            if z != row[2]:
                 continue

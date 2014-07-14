@@ -1,4 +1,7 @@
 #! coding: utf-8
+"""wamnetからcityCdsに一致するデイまたは居宅の事業所番号を取得してくる
+"""
+
 import urllib.parse
 import urllib.request
 from lxml import etree

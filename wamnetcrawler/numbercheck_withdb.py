@@ -1,4 +1,8 @@
+#! /bin/env python
 #! coding: utf-8
+"""入力された事業所番号csvファイルとDB内の事業所番号を比較し
+   DBに登録がない事業所番号を一覧で返す
+"""
 import os
 import json
 import pymysql
@@ -6,6 +10,9 @@ import env
 import sys
 
 def main():
+    if len(sys.argv) == 1:
+        print("Usage: {} office_numbers.csv output.csv [DAY|KYOTAKU]".format(sys.argv[0]))
+        exit()
     if len(sys.argv) < 2:
         print("wamnetから取得した全事業所番号が記載されているファイル名を入力してください")
         exit()
@@ -16,7 +23,7 @@ def main():
         print("ターゲットとする事業所区分を指定してください。(DAY, KYOTAKU)")
         exit()
     
-    db_no = no_in_db()
+    db_no = db_office_numbers(sys.argv[3])
     file_no = no_in_file(sys.argv[1])
 
     out = open(sys.argv[2], "w")
@@ -30,14 +37,19 @@ def main():
         print(no_str + "　はDBに存在しません")
     out.close()
 
-def no_in_db():
+def db_office_numbers(kind):
     fname = os.path.join(os.path.dirname(__file__), "database.json")
     with open(fname) as f:
         database = json.load(f)
 
     con = pymysql.connect(**database)
     cur = con.cursor()
-    cur.execute("SELECT name, office_no FROM office")
+    if kind == "DAY":
+        cur.execute("SELECT name, office_no FROM office")
+    elif kind =="KYOTAKU":
+        cur.execute("SELECT name, office_no FROM kyotaku")
+    else:
+        raise ValueError("[DAY|KYTOAKU] is required")        
 
     db_file = open(env.output_dir + env.date_str + "-db_no.txt", "w")
     db_no = []

@@ -1,4 +1,7 @@
 #! coding: utf-8
+"""環境設定
+"""
+
 from datetime import datetime
 import logging
 

@@ -1,0 +1,16 @@
+1. Install Ruby ver.2.0.
+
+2. Install dependent libraries.
+
+% gem install bundler
+% bundle install --path=vendor/bundle
+
+3. Edit database.yml.
+
+4. Execute.
+
+% bundle exec ruby csvtodb.rb
+
+5. Result.
+
+See "warn.log" error information.

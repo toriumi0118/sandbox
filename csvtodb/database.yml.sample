@@ -1,0 +1,5 @@
+adapter:  mysql2
+host:     192.168.30.1
+username: user
+password: password
+database: mydb

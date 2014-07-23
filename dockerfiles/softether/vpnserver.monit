@@ -1,0 +1,3 @@
+check process vpnserver matching "vpnserver"
+    start program = "/usr/local/vpnserver/vpnserver start"
+    stop  program = "/usr/local/vpnserver/vpnserver stop"

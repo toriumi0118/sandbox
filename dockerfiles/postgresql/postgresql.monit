@@ -1,0 +1,3 @@
+check process postgresql matching postmaster
+	start program = "/sbin/service postgresql start"
+	stop  program = "/sbin/service postgresql stop"

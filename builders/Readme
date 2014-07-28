@@ -1,0 +1,24 @@
+Whats this ? :
+
+  This is DB Build Script for centralserver.
+  
+Usage : 
+
+  1. compile [builders] using ant with build.xml. 
+     exam) ant --Djarname pb.jar
+
+  2. execute script.
+     You need arguments below.
+     
+     --target-ver : build up versions. currently "0001, 0100, 0200, 0300, 0400, 0402, 0405, 0407, 0500" on 28 July.
+                    You need all previous version to build up.
+     --version-dir : version directory. Basically "centralserver/db/version".
+     --dbhost : DB host. localhost, 192.168.0.??? or etc.
+     --dbname : DB scheme name.
+     --dbuser : DB user name.
+     --dbpass : DB access password for dbuser.
+     --req-usr-data : [OPTION] if true, data in usr-data directory is filled up target db.
+     --rebuild : [OPTION] if true, then tables is dropped if the script find "CREATE TABLE IF EXIST".
+     
+     exam) java -jar pb.jar --target-ver 0001, 0100, 0200, 0300, 0400, 0402, 0405, 0407, 0500 --version-dir /centralserver/db/version --dbhost localhost --dbname central --dbuser devel --dbpass hogehoge --req-usr-data true --rebuild true
+     

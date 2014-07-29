@@ -37,4 +37,5 @@ executable central2
                      , text
                      , time
                      , transformers
+                     , wai-extra
                      , yaml

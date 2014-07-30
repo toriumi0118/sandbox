@@ -34,6 +34,7 @@ executable central2
                      , relational-schemas
                      , scotty
                      , sql-words
+                     , template-haskell
                      , text
                      , time
                      , transformers

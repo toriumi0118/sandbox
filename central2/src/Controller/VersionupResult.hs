@@ -8,8 +8,6 @@ module Controller.VersionupResult
 import Control.Applicative
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Data.Monoid
-import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as LT
 import Data.Time.LocalTime (ZonedTime)
 import qualified Data.Time.LocalTime as Time
@@ -22,6 +20,8 @@ import qualified Web.Scotty as Scotty
 
 import Auth (Auth)
 import qualified Auth
+import Controller.Types.Class (parseParams)
+import qualified Controller.Types.PostResult as PR
 import DataSource (connect)
 import qualified Query
 import Table.UpdateResult (UpdateResult)
@@ -39,31 +39,17 @@ data ResultsJson = ResultsJson
 
 $(deriveJSON defaultOptions ''ResultsJson)
 
-data PostResult = PostResult
-    { succeed' :: Bool
-    , message' :: Text
-    }
-
-parseParams :: Text -> ActionM (Maybe PostResult)
-parseParams name = do
-    s <- Scotty.param $ mconcat [name, ".", "succeed"]
-    m <- Scotty.param $ mconcat [name, ".", "message"]
-    return $ Just $ PostResult s m
-
 result :: Auth -> ActionM ()
 result a = do
-    mpr <- parseParams "data"
-    case mpr of
-        Nothing -> fail "no data"
-        Just pr -> do
-            now <- liftIO $ Time.getZonedTime
-            Query.execUpdate connect $ \conn -> do
-                runInsert conn UR.insertUpdateResult'
-                    ( ( ( Just $ LT.unpack $ message' pr
-                        , now)
-                      , if succeed' pr then 1 else 0)
-                    , fromIntegral $ Auth.deviceId a)
-            Scotty.text "OK"
+    pr <- parseParams "data"
+    now <- liftIO $ Time.getZonedTime
+    Query.execUpdate connect $ \conn -> do
+        runInsert conn UR.insertUpdateResult'
+            ( ( ( Just $ LT.unpack $ PR.message pr
+                , now)
+              , if PR.succeed pr then 1 else 0)
+            , fromIntegral $ Auth.deviceId a)
+    Scotty.text "OK"
 
 resultsQuery :: Relation () (UpdateResult, Device)
 resultsQuery = relation $ do

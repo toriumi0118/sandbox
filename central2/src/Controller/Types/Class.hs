@@ -7,21 +7,12 @@ module Controller.Types.Class
 
 import Data.Monoid (mconcat)
 import Data.Text.Lazy (Text)
-import qualified Data.Text.Lazy as LT
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Web.Scotty (ActionM, param)
 
 class PostParam a where
     parseParams :: Text -> ActionM a
-
-f :: Name -> Name -> Name -> StmtQ
-f name bind label = bindS (varP bind)
-    $ appsE
-    [ (varE 'param)
-    , (varE 'mconcat)
-    , listE [varE name, stringE ".", stringE (show label)]
-    ]
 
 fst3 :: (a, b, c) -> a
 fst3 (a, _, _) = a

@@ -22,20 +22,17 @@ getParamS :: Name -> VarStrictType -> Q (Name, StmtQ)
 getParamS name (fname, _, _) = do
     x <- newName "x"
     return (x, bindS (varP x)
-        [|param $ mconcat
-            [$(varE name), ".", $(stringE $ nameBase fname)]
-        |])
+        [|param (mconcat
+            [$(varE name), ".", $(stringE $ nameBase fname)])|])
 
 deriveParam :: Name -> DecsQ
 deriveParam dat = do
     (TyConI (DataD _ _ _ [RecC dConst vsTypes] _)) <- reify dat
     name <- newName "name"
     binds <- mapM (getParamS name) vsTypes
-    es <- mapM (varE . fst) binds
-    let recon = map return $ zip (map fst3 vsTypes) es
-    let body = normalB $ doE
-            (map snd binds
-            ++ [noBindS [|return $(recConE dConst recon)|]])
+    let con = appsE (conE dConst:map (varE . fst) binds)
+    let body = normalB
+            (doE (map snd binds ++ [noBindS (appE (varE 'return) con)]))
     d <- instanceD
         (cxt [])
         [t|PostParam $(conT dat)|]

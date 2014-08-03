@@ -41,7 +41,7 @@ $(deriveJSON defaultOptions ''ResultsJson)
 
 result :: Auth -> ActionM ()
 result a = do
-    pr <- parseParams "data"
+    pr <- parseParams "data" :: ActionM PR.PostResult
     now <- liftIO $ Time.getZonedTime
     Query.execUpdate connect $ \conn -> do
         runInsert conn UR.insertUpdateResult'

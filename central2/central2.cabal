@@ -27,6 +27,7 @@ executable central2
                      , HDBC
                      , HDBC-session
                      , HDBC-postgresql
+                     , mtl
                      , names-th
                      , persistable-record
                      , relational-query

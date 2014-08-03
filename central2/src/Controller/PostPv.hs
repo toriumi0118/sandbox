@@ -14,4 +14,5 @@ import Controller.Types.Count
 
 postPv :: Auth -> ActionM ()
 postPv _ = do
-    undefined
+    c <- parseParams "data"
+    liftIO $ print $ pvcounts c

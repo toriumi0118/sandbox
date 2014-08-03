@@ -6,14 +6,16 @@ module Controller.Types.Class
     ) where
 
 import Control.Monad.Error.Class (catchError)
+import Data.ByteString (ByteString)
 import Data.Maybe (catMaybes)
 import Data.Monoid
+import qualified Data.Text as ST
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy.Builder as LTB
 import qualified Data.Text.Lazy.Builder.Int as LTB
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
-import Web.Scotty (ActionM, param)
+import Web.Scotty (ActionM, Parsable, param)
 
 class Bindable a where
     parseParams :: Text -> ActionM a
@@ -22,6 +24,39 @@ class Bindable a where
 
 instance Bindable a => Bindable [a] where
     parseParams' prefix _ = parseParamList prefix [0..]
+
+instance Bindable Bool where
+    parseParams' = parse
+
+instance Bindable Char where
+    parseParams' = parse
+
+instance Bindable Double where
+    parseParams' = parse
+
+instance Bindable Float where
+    parseParams' = parse
+
+instance Bindable Int where
+    parseParams' = parse
+
+instance Bindable Integer where
+    parseParams' = parse
+
+instance Bindable () where
+    parseParams' = parse
+
+instance Bindable ByteString where
+    parseParams' = parse
+
+instance Bindable ST.Text where
+    parseParams' = parse
+
+instance Bindable Text where
+    parseParams' = parse
+
+parse :: Parsable a => Text -> Maybe Text -> ActionM a
+parse prefix msuffix = param $ mconcat $ catMaybes [Just prefix, msuffix]
 
 parseParamList :: Bindable a => Text -> [Int] -> ActionM [a]
 parseParamList _      []     = fail "not reached"
@@ -41,7 +76,7 @@ getParamS :: Name -> Name -> VarStrictType -> Q (Name, StmtQ)
 getParamS pname sname (fname, _, _) = do
     x <- newName "x"
     return (x, bindS (varP x)
-        [|param (mconcat (catMaybes
+        [|parseParams (mconcat (catMaybes
             [ Just $(varE pname)
             , Just "."
             , Just $(stringE $ nameBase fname)

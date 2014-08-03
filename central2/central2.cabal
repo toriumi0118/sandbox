@@ -22,8 +22,9 @@ executable central2
   default-extensions:  OverloadedStrings
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.6 && <4.7
+  build-depends:       base ==4.*
                      , aeson
+                     , bytestring
                      , HDBC
                      , HDBC-session
                      , HDBC-postgresql

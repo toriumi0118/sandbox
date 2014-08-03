@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, FlexibleInstances #-}
 
 module Controller.Types.Class
-    ( PostParam(..)
-    , deriveParam
+    ( Bindable(..)
+    , deriveBindable
     ) where
 
 import Control.Monad.Error.Class (catchError)
@@ -15,19 +15,19 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Web.Scotty (ActionM, param)
 
-class PostParam a where
+class Bindable a where
     parseParams :: Text -> ActionM a
     parseParams prefix = parseParams' prefix Nothing
     parseParams' :: Text -> Maybe Text -> ActionM a
 
-instance PostParam a => PostParam[a] where
-    parseParams' prefix _ = f prefix [0..]
+instance Bindable a => Bindable [a] where
+    parseParams' prefix _ = parseParamList prefix [0..]
 
-f :: PostParam a => Text -> [Int] -> ActionM [a]
-f _      []     = fail "not reached"
-f prefix (n:ns) = do
+parseParamList :: Bindable a => Text -> [Int] -> ActionM [a]
+parseParamList _      []     = fail "not reached"
+parseParamList prefix (n:ns) = do
     a <- parseParams' (prefix <> br) Nothing
-    as <- f prefix ns `catchError` \_ -> return []
+    as <- parseParamList prefix ns `catchError` \_ -> return []
     return $ a:as
   where
     toText = LTB.toLazyText . LTB.decimal
@@ -49,8 +49,8 @@ getParamS pname sname (fname, _, _) = do
             ]))
          |])
 
-deriveParam :: Name -> DecsQ
-deriveParam dat = do
+deriveBindable :: Name -> DecsQ
+deriveBindable dat = do
     (TyConI (DataD _ _ _ [RecC dConst vsTypes] _)) <- reify dat
     let pname = mkName "prefix"
     let sname = mkName "msuffix"
@@ -58,6 +58,6 @@ deriveParam dat = do
     let con = appsE (conE dConst:map (varE . fst) binds)
     let expr = doE (map snd binds ++ [noBindS [|return $con|]])
     [d|
-        instance PostParam $(conT dat) where
+        instance Bindable $(conT dat) where
             parseParams' prefix msuffix = $expr
       |]

@@ -9,7 +9,7 @@ data Count = Count
     }
   deriving (Show)
 
-deriveParam ''Count
+deriveBindable ''Count
 
 data PvCount = PvCount
     {

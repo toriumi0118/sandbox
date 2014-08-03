@@ -11,4 +11,4 @@ data PostResult = PostResult
     , message :: Text
     }
 
-deriveParam ''PostResult
+deriveBindable ''PostResult

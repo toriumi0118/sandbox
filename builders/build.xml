@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="projectbuilder" default="jar-dbbuilder" basedir="./">
-	<fail unless="jarname" />
+	<property name="jarname" value="pb.jar"/>
 	<property name="src" value="./src" />
 	<property name="lib" value="./lib" />
 	<property name="classes" value="./classes" />

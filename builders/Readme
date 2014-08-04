@@ -5,7 +5,7 @@ Whats this ? :
 Usage : 
 
   1. compile [builders] using ant with build.xml. 
-     exam) ant --Djarname pb.jar
+     exam) ant -Djarname=pb.jar
 
   2. execute script.
      You need arguments below.

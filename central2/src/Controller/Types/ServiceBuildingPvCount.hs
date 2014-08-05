@@ -2,7 +2,7 @@
 
 module Controller.Types.ServiceBuildingPvCount where
 
-import Controller.Types.Class
+import Web.Scotty.Binding.Play (deriveBindable)
 
 data ServiceBuildingPvCount = ServiceBuildingPvCount
     { sbId :: Int

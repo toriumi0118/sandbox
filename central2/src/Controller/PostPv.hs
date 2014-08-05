@@ -7,10 +7,10 @@ module Controller.PostPv
 import Database.HDBC.Record (runInsert)
 import Web.Scotty (ActionM)
 import qualified Web.Scotty as Scotty
+import Web.Scotty.Binding.Play (parseParams)
 
 import Auth (Auth)
 import qualified Auth
-import Controller.Types.Class
 import qualified Controller.Types.Count as Count
 import qualified Controller.Types.PvCount as PvCount
 import qualified Controller.Types.TopicCount as TopicCount

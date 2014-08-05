@@ -2,9 +2,9 @@
 
 module Controller.Types.PostResult where
 
-import Data.Text.Lazy (Text)
+import Web.Scotty.Binding.Play (deriveBindable)
 
-import Controller.Types.Class
+import Data.Text.Lazy (Text)
 
 data PostResult = PostResult
     { succeed :: Bool

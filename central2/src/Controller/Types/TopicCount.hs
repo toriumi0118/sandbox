@@ -2,7 +2,7 @@
 
 module Controller.Types.TopicCount where
 
-import Controller.Types.Class
+import Web.Scotty.Binding.Play (deriveBindable)
 
 data TopicCount = TopicCount
     { topicId :: Int

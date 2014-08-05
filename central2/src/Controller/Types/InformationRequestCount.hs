@@ -2,8 +2,9 @@
 
 module Controller.Types.InformationRequestCount where
 
+import Web.Scotty.Binding.Play (deriveBindable)
+
 import Data.Text.Lazy (Text)
-import Controller.Types.Class
 
 data InformationRequestCount = InformationRequestCount
     { businessKind :: Int

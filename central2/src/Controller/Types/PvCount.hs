@@ -2,7 +2,7 @@
 
 module Controller.Types.PvCount where
 
-import Controller.Types.Class
+import Web.Scotty.Binding.Play (deriveBindable)
 
 data PvCount = PvCount
     { pageType :: Int

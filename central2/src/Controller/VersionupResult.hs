@@ -17,10 +17,10 @@ import GHC.Int (Int32)
 import Prelude hiding (id)
 import Web.Scotty (ActionM)
 import qualified Web.Scotty as Scotty
+import Web.Scotty.Binding.Play (parseParams)
 
 import Auth (Auth)
 import qualified Auth
-import Controller.Types.Class (parseParams)
 import qualified Controller.Types.PostResult as PR
 import DataSource (connect)
 import qualified Query

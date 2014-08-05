@@ -2,7 +2,8 @@
 
 module Controller.Types.Count where
 
-import Controller.Types.Class
+import Web.Scotty.Binding.Play (deriveBindable)
+
 import Controller.Types.TopicCount
 import Controller.Types.PvCount
 import Controller.Types.ServiceBuildingPvCount

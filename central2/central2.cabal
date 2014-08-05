@@ -24,19 +24,17 @@ executable central2
   -- other-extensions:    
   build-depends:       base ==4.*
                      , aeson
-                     , bytestring
                      , HDBC
                      , HDBC-session
                      , HDBC-postgresql
-                     , mtl
                      , names-th
                      , persistable-record
                      , relational-query
                      , relational-query-HDBC
                      , relational-schemas
                      , scotty
+                     , scotty-binding-play
                      , sql-words
-                     , template-haskell
                      , text
                      , time
                      , transformers

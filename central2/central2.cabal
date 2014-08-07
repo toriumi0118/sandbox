@@ -25,10 +25,13 @@ executable central2
   build-depends:       base ==4.*
                      , aeson
                      , HDBC
+                     , HDBC-mysql
                      , HDBC-session
                      , HDBC-postgresql
+                     , mtl
                      , names-th
                      , persistable-record
+                     , relational-mysql
                      , relational-query
                      , relational-query-HDBC
                      , relational-schemas

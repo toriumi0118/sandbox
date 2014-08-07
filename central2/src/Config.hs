@@ -3,22 +3,19 @@
 module Config
     ( Config(..)
     , loadConfig
-    , pgsqlOption
     ) where
 
 import Control.Exception (throwIO)
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Data.List (intercalate)
-import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
 data Config = Config
-    { dbHost :: Maybe Text
+    { dbHost :: Maybe String
     , dbPort :: Maybe Int
-    , dbName :: Text
-    , dbUser :: Maybe Text
-    , dbPassword :: Maybe Text
+    , dbSchema :: String
+    , dbName :: Maybe String
+    , dbUser :: Maybe String
+    , dbPassword :: Maybe String
     }
   deriving (Show)
 
@@ -30,14 +27,3 @@ loadConfig = do
     case ea of
         Left err -> throwIO err
         Right a  -> return a
-
-pgsqlOption :: Config -> String
-pgsqlOption conf = intercalate " "
-    [ f "dbname" T.unpack (Just $ dbName conf)
-    , f "host" T.unpack (dbHost conf)
-    , f "port" show (dbPort conf)
-    , f "user" T.unpack (dbUser conf)
-    , f "password" T.unpack (dbPassword conf)
-    ]
-  where
-    f name g = maybe "" (\a -> intercalate "=" [name, g a])

@@ -6,7 +6,6 @@ module DataSource.MySQL
     , driver
     ) where
 
-import Control.Concurrent (threadDelay)
 import Control.Exception (SomeException, catch)
 import qualified Control.Monad.State as State
 import Data.Aeson (FromJSON(parseJSON), ToJSON(toJSON))

@@ -34,7 +34,7 @@ data ResultsJson = ResultsJson
     { id :: !Int64
     , message :: !(Maybe String)
     , prcDate :: !LocalTime
-    , succeed :: !(Maybe Int32)
+    , succeed :: !Int32
     , device :: !Device
     }
 
@@ -48,7 +48,7 @@ result a = do
         runInsert conn UR.insertUpdateResult'
             ( ( ( Just $ LT.unpack $ PR.message pr
                 , now)
-              , Just $ if PR.succeed pr then 1 else 0)
+              , fromIntegral $ if PR.succeed pr then 1 else 0)
             , fromIntegral $ Auth.deviceId a)
     Scotty.text "OK"
 

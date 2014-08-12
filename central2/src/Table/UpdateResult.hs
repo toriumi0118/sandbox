@@ -13,7 +13,7 @@ $(defineTable "update_result")
 
 $(deriveJSON defaultOptions ''UpdateResult)
 
-insertUpdateResult' :: Insert (((Maybe String, LocalTime), Maybe Int32), Int64)
+insertUpdateResult' :: Insert (((Maybe String, LocalTime), Int32), Int64)
 insertUpdateResult' = typedInsert
     (message' >< prcDate' >< succeed' >< deviceId')
     tableOfUpdateResult

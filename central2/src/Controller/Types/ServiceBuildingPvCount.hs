@@ -8,6 +8,7 @@ data ServiceBuildingPvCount = ServiceBuildingPvCount
     { sbId :: Int
     , count :: Int
     , dateYmd :: Int
+    , pageType :: Int
     }
   deriving (Show)
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Controller.VersionupResult
     ( result
@@ -48,7 +49,7 @@ result a = do
         runInsert conn UR.insertUpdateResult'
             ( ( ( Just $ LT.unpack $ PR.message pr
                 , now)
-              , fromIntegral $ if PR.succeed pr then 1 else 0)
+              , if PR.succeed pr then 1 else 0)
             , fromIntegral $ Auth.deviceId a)
     Scotty.text "OK"
 

@@ -22,9 +22,23 @@ import qualified Web.Scotty as Scotty
 import Auth (Auth)
 import DataSource (Connection)
 import qualified Query
-import qualified Table.OfficeHistory as OfficeHis
-import qualified Table.KyotakuHistory as KyotakuHis
-import qualified Table.NewsHistory as NewsHis
+import qualified Table.OfficeHistory as OH
+import qualified Table.KyotakuHistory as KH
+import qualified Table.NewsHistory as NH
+import qualified Table.TopicHistory as TH
+import qualified Table.OfficeImageHistory as OIH
+import qualified Table.OfficePresentationHistory as OPH
+import qualified Table.OfficeAdHistory as OAH
+import qualified Table.OfficeCaseHistory as OCH
+import qualified Table.OfficeSpPriceHistory as OSPH
+import qualified Table.PdfDocHistory as PDH
+import qualified Table.CatalogHistory as CH
+import qualified Table.ServiceBuildingHistory as SBH
+import qualified Table.ServiceBuildingImageHistory as SBIH
+import qualified Table.ServiceBuildingRoomTypeImgHistory as SBRTIH
+import qualified Table.ServiceBuildingPresentationHistory as SBPH
+import qualified Table.SbAdHistory as SAH
+import qualified Table.RelatedOfficeHistory as ROH
 import qualified Table.Version as Version
 import Util (fromJustM)
 
@@ -58,11 +72,23 @@ storeRecentHis conn name rel k = do
 
 getHisIds :: Connection -> IO (Map String Value)
 getHisIds conn = flip State.execStateT Map.empty $ do
-    storeRecentHis conn "officeId" OfficeHis.officeHistory OfficeHis.id'
-    storeRecentHis conn "kyotakuId" KyotakuHis.kyotakuHistory KyotakuHis.id'
-    storeRecentHis conn "newsHeadId" NewsHis.newsHistory NewsHis.id'
-
-    undefined
+    storeRecentHis conn "officeId" OH.officeHistory OH.id'
+    storeRecentHis conn "kyotakuId" KH.kyotakuHistory KH.id'
+    storeRecentHis conn "newsHeadId" NH.newsHistory NH.id'
+    storeRecentHis conn "topicId" TH.topicHistory TH.id'
+    storeRecentHis conn "officeImageId" OIH.officeImageHistory OIH.id'
+    storeRecentHis conn "officePresentationId" OPH.officePresentationHistory OPH.id'
+    storeRecentHis conn "officeAdId" OAH.officeAdHistory OAH.id'
+    storeRecentHis conn "officeCaseId" OCH.officeCaseHistory OCH.id'
+    storeRecentHis conn "officeSpPriceId" OSPH.officeSpPriceHistory OSPH.id'
+    storeRecentHis conn "pdfDocId" PDH.pdfDocHistory PDH.id'
+    storeRecentHis conn "catalogId" CH.catalogHistory CH.id'
+    storeRecentHis conn "serviceBuildingId" SBH.serviceBuildingHistory SBH.id'
+    storeRecentHis conn "serviceBuildingImgId" SBIH.serviceBuildingImageHistory SBIH.id'
+    storeRecentHis conn "serviceBuildingRoomTypeImgId" SBRTIH.serviceBuildingRoomTypeImgHistory SBRTIH.id'
+    storeRecentHis conn "serviceBuildingPresentationId" SBPH.serviceBuildingPresentationHistory SBPH.id'
+    storeRecentHis conn "sbAdId" SAH.sbAdHistory SAH.id'
+    storeRecentHis conn "relatedOfficeId" ROH.relatedOfficeHistory ROH.id'
 
 versionupInfo :: Auth -> ActionM ()
 versionupInfo _ = do

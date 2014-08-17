@@ -1,17 +1,16 @@
 module DataSource
     ( connect
     , defineTable
+    , Connection
     ) where
 
---import Database.HDBC.PostgreSQL (Connection)
-import Database.HDBC.MySQL (Connection)
 import Database.HDBC.Query.TH (defineTableFromDB)
 import Database.Record.TH (derivingShow)
 import Language.Haskell.TH
 
 import Config (loadConfig, Config(..))
---import qualified DataSource.PostgreSQL as PostgreSQL
 import qualified DataSource.MySQL as MySQL
+import DataSource.Types (Connection)
 
 connect :: IO Connection
 connect = loadConfig >>= MySQL.connect

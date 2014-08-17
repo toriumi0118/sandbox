@@ -22,6 +22,7 @@ executable central2
   default-extensions:  OverloadedStrings
   build-depends:       base ==4.*
                      , aeson
+                     , containers
                      , HDBC
                      , HDBC-mysql
                      , HDBC-session
@@ -33,6 +34,7 @@ executable central2
                      , relational-query
                      , relational-query-HDBC
                      , relational-schemas
+                     , safe
                      , scotty
                      , scotty-binding-play
                      , sql-words

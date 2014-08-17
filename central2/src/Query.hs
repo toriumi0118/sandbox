@@ -2,30 +2,30 @@
 
 module Query
     ( runQuery
-    , execQuery
-    , execUpdate
+    , query
+    , update
     ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Database.HDBC (IConnection, SqlValue, commit)
+import Database.HDBC (IConnection(..), SqlValue, commit)
 import qualified Database.HDBC.Record.Query as Q
 import Database.HDBC.Session (withConnectionIO, handleSqlError')
 import Database.Record (FromSql, ToSql)
 import Database.Relational.Query (Relation, relationalQuery)
+
+import DataSource (connect, Connection)
 
 runQuery :: (IConnection conn, ToSql SqlValue p, FromSql SqlValue a)
     => conn -> Relation p a -> p -> IO [a]
 runQuery conn relation params =
     Q.runQuery conn (relationalQuery relation) params
 
-execQuery :: (IConnection conn, MonadIO m)
-    => IO conn -> (conn -> IO a) -> m a
-execQuery conn =
-    liftIO . handleSqlError' . withConnectionIO conn
+query :: MonadIO m => (Connection -> IO a) -> m a
+query =
+    liftIO . handleSqlError' . withConnectionIO connect
 
-execUpdate :: (IConnection conn, MonadIO m)
-    => IO conn -> (conn -> IO a) -> m a
-execUpdate conn body = execQuery conn $ \c -> do
-    r <- body c
-    commit c
+update :: MonadIO m => (Connection -> IO a) -> m a
+update f = query $ \conn -> do
+    r <- f conn
+    commit conn
     return r

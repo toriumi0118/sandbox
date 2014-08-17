@@ -24,7 +24,6 @@ import Web.Scotty.Binding.Play (parseParams)
 import Auth (Auth)
 import qualified Auth
 import qualified Controller.Types.PostResult as PR
-import DataSource (connect)
 import qualified Query
 import Table.UpdateResult (UpdateResult)
 import qualified Table.UpdateResult as UR
@@ -45,7 +44,7 @@ result :: Auth -> ActionM ()
 result a = do
     pr <- parseParams "data" :: ActionM PR.PostResult
     (ZonedTime now _zone)<- liftIO $ Time.getZonedTime
-    Query.execUpdate connect $ \conn -> do
+    Query.update $ \conn -> do
         runInsert conn UR.insertUpdateResult'
             ( ( ( Just $ LT.unpack $ PR.message pr
                 , now)
@@ -65,7 +64,7 @@ resultsQuery = relation $ do
 
 results :: Auth -> ActionM ()
 results _ = do
-    Query.execQuery connect $ \conn ->
+    Query.query $ \conn ->
         map pack <$> Query.runQuery conn resultsQuery ()
     >>= Scotty.json
   where

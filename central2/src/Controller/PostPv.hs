@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Controller.PostPv
     ( postPv
     ) where
@@ -20,7 +18,6 @@ import qualified Controller.Types.PvCount as PvCount
 import qualified Controller.Types.TopicCount as TopicCount
 import qualified Controller.Types.ServiceBuildingPvCount as SbPvCount
 import qualified Controller.Types.InformationRequestCount as ReqCount
-import DataSource (connect)
 import qualified Query
 import qualified Table.PvCountCollect as PV
 import qualified Table.TopicPvCountCollect as TPV
@@ -30,7 +27,7 @@ import qualified Table.RequestInformation as RI
 postPv :: Auth -> ActionM ()
 postPv auth = do
     pv <- parseParams "data"
-    Query.execUpdate connect $ \conn -> do
+    Query.update $ \conn -> do
         mapM (\opv -> runInsert conn PV.insertPvCountCollect
             $ PV.PvCountCollect
                 (fromIntegral $ PvCount.pageType opv)

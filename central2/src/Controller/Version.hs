@@ -5,8 +5,9 @@ module Controller.Version
     ) where
 
 import Control.Applicative
-import Control.Monad.State (State)
-import qualified Control.Monad.State as State
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State (StateT)
+import qualified Control.Monad.Trans.State as State
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -45,20 +46,23 @@ recentHis conn rel k =
     headMay <$> Query.runQuery conn (recent rel k) ()
 
 insertIfNotNull :: ToJSON a
-    => String -> Maybe a -> State (Map String Value) ()
+    => String -> Maybe a -> StateT (Map String Value) IO ()
 insertIfNotNull name = fromJustM $ State.modify . Map.insert name . toJSON
 
-getHisIds :: Connection -> IO (Map String Value)
-getHisIds conn = do
-    officeHis <- recentHis conn OfficeHis.officeHistory OfficeHis.id'
-    kyotakuHis <- recentHis conn KyotakuHis.kyotakuHistory KyotakuHis.id'
-    newsHis <- recentHis conn NewsHis.newsHistory NewsHis.id'
+storeRecentHis :: (FromSql SqlValue a, ToJSON a)
+    => Connection -> String -> Relation () a -> Pi a Int64
+    -> StateT (Map String Value) IO ()
+storeRecentHis conn name rel k = do
+    his <- lift $ recentHis conn rel k
+    insertIfNotNull name his
 
-    return $ flip State.execState Map.empty $ do
-        insertIfNotNull "officeId" officeHis
-        insertIfNotNull "kyotakuId" kyotakuHis
-        insertIfNotNull "newsHeadId" newsHis
-        undefined
+getHisIds :: Connection -> IO (Map String Value)
+getHisIds conn = flip State.execStateT Map.empty $ do
+    storeRecentHis conn "officeId" OfficeHis.officeHistory OfficeHis.id'
+    storeRecentHis conn "kyotakuId" KyotakuHis.kyotakuHistory KyotakuHis.id'
+    storeRecentHis conn "newsHeadId" NewsHis.newsHistory NewsHis.id'
+
+    undefined
 
 versionupInfo :: Auth -> ActionM ()
 versionupInfo _ = do

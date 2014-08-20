@@ -83,11 +83,11 @@ def opendata(fname):
 
 def geocode(address):
     try:
-        return Geocoder.geocode("福岡県" + address)[0].coordinates
+        return Geocoder.geocode(address)[0].coordinates
     except:
         rep = re.match(r"((.+-\d+)|(.+\d+号))", ad).group()
         print('%sのgeocodeが見つかりませんでした。調整します。→%s' % (ad, rep))
-        return Geocoder.geocode("福岡県" + rep)[0].coordinates
+        return Geocoder.geocode(rep)[0].coordinates
 
 if __name__ == '__main__':
     main()

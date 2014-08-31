@@ -11,9 +11,3 @@ import DataSource (defineTable)
 defineTable "office"
 
 deriveJSON defaultOptions ''Office
-
-officeInIdList :: Integral a => [a] -> Relation () Office
-officeInIdList ids = relation $ do
-    o <- query office
-    wheres $ o ! officeId' `in'` values (map fromIntegral ids)
-    return o

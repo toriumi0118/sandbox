@@ -82,6 +82,13 @@ targetHistories conn r k =
   where
     oid = fromIntegral . officeId
 
+inIdList :: (Integral i, Num j, ShowConstantTermsSQL j)
+    => Relation () a -> Pi a j -> [i] -> Relation () a
+inIdList rel k ids = relation $ do
+    o <- query rel
+    wheres $ o ! k `in'` values (map fromIntegral ids)
+    return o
+
 content :: (MonadIO m, FromSql SqlValue a, Ord a, C.History a, ToJSON a)
     => Relation () a -> Pi a Int64
     -> VersionupHisIds -> VersionupHisIds -> m [Value]
@@ -91,7 +98,7 @@ content r k from to = Query.query $ \conn ->
     uniq = Set.toList . Set.fromList
     f _    [] = return []
     f conn hs = do
-        map toJSON <$> Query.runQuery conn (O.officeInIdList $ map fst hs) ()
+        map toJSON <$> Query.runQuery conn (inIdList O.office O.officeId' $ map fst hs) ()
         error "tmp"
 
 updateContent :: MonadIO m

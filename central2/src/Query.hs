@@ -15,10 +15,10 @@ import Database.Relational.Query (Relation, relationalQuery)
 
 import DataSource (connect, Connection)
 
-runQuery :: (IConnection conn, ToSql SqlValue p, FromSql SqlValue a)
-    => conn -> Relation p a -> p -> IO [a]
-runQuery conn relation params =
-    Q.runQuery conn (relationalQuery relation) params
+runQuery :: (MonadIO m, IConnection conn, ToSql SqlValue p, FromSql SqlValue a)
+    => conn -> Relation p a -> p -> m [a]
+runQuery conn relation =
+    liftIO . Q.runQuery conn (relationalQuery relation)
 
 query :: MonadIO m => (Connection -> IO a) -> m a
 query =

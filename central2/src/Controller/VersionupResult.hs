@@ -46,10 +46,11 @@ result a = do
     (ZonedTime now _zone)<- liftIO $ Time.getZonedTime
     Query.update $ \conn -> do
         runInsert conn UR.insertUpdateResult'
-            ( ( ( Just $ LT.unpack $ PR.message pr
-                , now)
-              , if PR.succeed pr then 1 else 0)
-            , fromIntegral $ Auth.deviceId a)
+            ( Just $ LT.unpack $ PR.message pr
+            , now
+            , if PR.succeed pr then 1 else 0
+            , fromIntegral $ Auth.deviceId a
+            )
     Scotty.text "OK"
 
 instance ProductConstructor (Int32 -> Int64) where

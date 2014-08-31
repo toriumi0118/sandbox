@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, RankNTypes #-}
+{-# LANGUAGE FlexibleContexts, RankNTypes, TemplateHaskell #-}
 
 module Controller.Update
     ( contents
@@ -10,7 +10,8 @@ import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
-import Data.Aeson (Value, ToJSON, toJSON)
+import Data.Aeson (Value, ToJSON(toJSON))
+import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Bifunctor (bimap)
 import Data.Int (Int64)
 import Data.Map (Map)
@@ -33,7 +34,7 @@ import DataSource (Connection)
 import qualified Query
 import qualified Table.Office as O
 import qualified Table.OfficeHistory as OH
-import Util (clientError)
+import Util (clientError, initIf)
 
 data UpdateResponseKey
     = DATA
@@ -51,6 +52,21 @@ data UpdateResponseKey
     | FILE_TYPE
     | FILE_ACtION
   deriving (Eq, Ord, Show)
+
+data FileAction = INSERT | DELETE | UPDATE
+  deriving (Show, Read)
+
+deriveJSON defaultOptions ''FileAction
+
+data UpdateData = UpdateData
+    { index :: Integer
+    , action :: FileAction
+    , table :: String
+    , pkColumn :: String
+    , data' :: [[String]]
+    }
+
+deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
 
 -- | from-toからidとactionのセットを取得するSQL
 history :: C.History a
@@ -98,6 +114,8 @@ content r k from to = Query.query $ \conn ->
     uniq = Set.toList . Set.fromList
     f _    [] = return []
     f conn hs = do
+        -- TODO: actionがDELETEの時にも対応する
+        -- TODO: これをさらにUpdateDataに詰めて返す
         map toJSON <$> Query.runQuery conn (inIdList O.office O.officeId' $ map fst hs) ()
         error "tmp"
 

@@ -4,6 +4,7 @@ module Util
     ( retry
     , fromJustM
     , clientError
+    , initIf
     ) where
 
 import Control.Exception (SomeException, catch)
@@ -19,3 +20,10 @@ fromJustM f = maybe (return ()) f
 
 clientError :: ActionM ()
 clientError = Scotty.text ""
+
+initIf :: (a -> Bool) -> [a] -> [a]
+initIf _ []       = []
+initIf f [a]
+    | f a         = []
+    | otherwise   = [a]
+initIf _ as@(_:_) = as

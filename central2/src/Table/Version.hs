@@ -4,7 +4,7 @@ module Table.Version where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
-import Controller.Types.Json ()
+import Controller.Types.Class ()
 import DataSource (defineTable)
 
 defineTable "version"

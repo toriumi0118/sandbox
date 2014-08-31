@@ -4,7 +4,7 @@ module Table.RelatedOfficeHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
-import Controller.Types.Json ()
+import Controller.Types.Class ()
 import DataSource (defineTable)
 
 defineTable "related_office_history"

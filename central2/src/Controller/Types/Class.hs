@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Controller.Types.Json where
+module Controller.Types.Class where
 
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Time (NominalDiffTime, UTCTime(..), Day(..), addUTCTime)

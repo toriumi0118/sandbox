@@ -7,7 +7,8 @@ import Database.Relational.Query
 
 import Controller.Types.Class ()
 import DataSource (defineTable)
+import TH
 
 defineTable "office"
-
 deriveJSON defaultOptions ''Office
+fields ''Office

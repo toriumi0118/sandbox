@@ -118,6 +118,12 @@ content r k from to = Query.query $ \conn ->
         -- TODO: これをさらにUpdateDataに詰めて返す
         map toJSON <$> Query.runQuery conn (inIdList O.office O.officeId' $ map fst hs) ()
         error "tmp"
+    officeToUC act o oid = UpdateData
+        oid
+        act
+        "office"
+        "officeId"
+        []
 
 updateContent :: MonadIO m
     => VersionupHisIds -> VersionupHisIds -> m (Map String [Value])

@@ -10,8 +10,8 @@ fields name = do
     (TyConI (DataD _ _ _ [RecC _ vsts] _)) <- reify name
     let rs = listE $ map (litE . stringL . baseName . show . fst3) vsts
     fun <- valD (varP funName) (normalB rs) []
-    runIO $ print funName
-    return [fun]
+    dec <- sigD funName [t|[String]|]
+    return [dec, fun]
   where
     toCamel [] = []
     toCamel (c:cs) = toLower c:cs

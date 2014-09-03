@@ -35,6 +35,7 @@ import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Office as O
+import qualified Table.OfficePrice as OP
 import qualified Table.OfficeHistory as OH
 import Util (clientError, initIf, (...))
 

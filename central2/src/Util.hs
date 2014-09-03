@@ -4,10 +4,13 @@ module Util
     ( retry
     , fromJustM
     , clientError
+    , (...)
+    , unique
     , initIf
     ) where
 
 import Control.Exception (SomeException, catch)
+import qualified Data.Set as Set
 import Web.Scotty (ActionM)
 import qualified Web.Scotty as Scotty
 
@@ -20,6 +23,12 @@ fromJustM f = maybe (return ()) f
 
 clientError :: ActionM ()
 clientError = Scotty.text ""
+
+(...) :: (d -> c) -> (a -> b -> d) -> (a -> b -> c)
+(...) = (.) . (.)
+
+unique :: Ord a => [a] -> [a]
+unique = Set.toList . Set.fromList
 
 initIf :: (a -> Bool) -> [a] -> [a]
 initIf _ []       = []

@@ -4,7 +4,7 @@
 module Controller.Types.Class where
 
 import Data.Aeson (FromJSON(..), ToJSON(..))
-import Data.Int (Int64)
+import Data.Int (Int64, Int32)
 import Data.Time (NominalDiffTime, UTCTime(..), Day(..), addUTCTime)
 import Database.Relational.Query
 import Database.Record (ToSql(recordToSql), wrapToSql, putRecord)
@@ -16,9 +16,9 @@ instance ToJSON NominalDiffTime where
     toJSON = toJSON . flip addUTCTime (UTCTime (ModifiedJulianDay 0) 0)
 
 class History a where
-    id :: a -> Int64
     action :: a -> String
     id' :: Pi a Int64
+    officeId' :: Pi a Int32
     action' :: Pi a String
 
 instance ProductConstructor (a -> b -> c -> d -> (a, b, c, d)) where

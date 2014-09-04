@@ -20,6 +20,7 @@ import Data.List (partition)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
+import Data.Monoid (mconcat)
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import Database.Relational.Query
@@ -37,6 +38,8 @@ import qualified Query
 import qualified Table.Office as O
 import qualified Table.OfficePrice as OP
 import qualified Table.OfficeHistory as OH
+import Table.Types (TableName, PkColumn, Fields, TableContext)
+import qualified Table.Types as T
 import Util (clientError, initIf, (...))
 
 data UpdateResponseKey
@@ -64,8 +67,8 @@ deriveJSON defaultOptions ''FileAction
 data UpdateData = UpdateData
     { index :: Integer
     , action :: FileAction
-    , table :: String
-    , pkColumn :: String
+    , table :: TableName
+    , pkColumn :: PkColumn
     , data' :: [Value]
     }
 
@@ -107,57 +110,81 @@ inIdList rel k ids = relation $ do
     asc $ o ! k
     return o
 
-classify :: [(Int32, FileAction)] -> [O.Office]
-    -> [((Int32, FileAction), Maybe O.Office)]
-classify []     _      = []
-classify (h:hs) []     = (h, Nothing):classify hs []
-classify (h:hs) (o:os)
-    | fst h == O.officeId o = (h, Just o):classify hs os
-    | otherwise             = (h, Nothing):classify hs (o:os)
+classify :: (a -> Int32) -> [(Int32, FileAction)] -> [a]
+    -> [((Int32, FileAction), Maybe a)]
+classify _ []     _      = []
+classify k (h:hs) []     = (h, Nothing):classify k hs []
+classify k (h:hs) (o:os)
+    | fst h == k o       = (h, Just o):classify k hs os
+    | otherwise          = (h, Nothing):classify k hs (o:os)
+
+toUpdateData :: ToJSON a
+    => (a -> Int32)
+    -> Fields
+    -> TableName
+    -> PkColumn
+    -> ((Int32, FileAction), Maybe a)
+    -> Maybe UpdateData
+toUpdateData _ _      t pk ((i, DELETE), _      ) = deleteData t pk i
+toUpdateData _ _      t pk ((i, UPDATE), Nothing) = deleteData t pk i
+toUpdateData _ _      _ _  (_          , Nothing) = Nothing
+toUpdateData k fields t pk ((_, act   ), Just o ) = Just $ UpdateData
+    (fromIntegral $ k o)
+    act
+    t
+    pk
+    [toJSON fields, toJSON [o]]
+
+deleteData :: String -> String -> Int32 -> Maybe UpdateData
+deleteData tabName keyName oid = Just $ UpdateData
+    oid'
+    DELETE
+    tabName
+    keyName
+    [toJSON [keyName], toJSON [oid']]
+  where
+    oid' :: Integer
+    oid' = fromIntegral oid
+
+updateDataTable :: (Functor m, MonadIO m, ToJSON a, FromSql SqlValue a)
+    => Connection
+    -> [(Int32, FileAction)]
+    -> TableContext a
+    -> m [Maybe UpdateData]
+updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
+    let (del1, oth) = partition ((==) DELETE . snd) hs
+    (del2, os) <- partition (isJust . snd) . classify k oth
+        <$> Query.runQuery conn
+            (inIdList rel k' $ map fst oth) ()
+    let ds = map (\d -> (d, Nothing)) del1
+            ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
+    return $ map (toUpdateData k fields tab pk) $ os ++ ds
+
+updateData :: (MonadIO m, Functor m)
+    => Connection -> [(Int32, FileAction)] -> m [Maybe UpdateData]
+updateData conn hs = mconcat <$> sequence
+    [ updateDataTable conn hs O.tableContext
+    , updateDataTable conn hs OP.tableContext
+    ]
 
 content :: (MonadIO m, FromSql SqlValue a, Ord a, C.History a, ToJSON a)
     => Relation () a -> Pi a Int64
     -> VersionupHisIds -> VersionupHisIds -> m [Maybe UpdateData]
 content r k from to = Query.query $ \conn ->
-    uniq <$> targetHistories conn r k from to >>= go conn . map (second read)
+    uniq <$> targetHistories conn r k from to
+        >>= updateData conn . map (second read)
   where
     uniq = Map.elems . flip State.execState Map.empty . f
       where
         f []            = return ()
         f (h@(i, _):hs) = State.modify (Map.insert i h) >> f hs
-    go conn hs = do
-        let (del1, oth) = partition ((==) DELETE . snd) hs
-        (del2, os) <- partition (isJust . snd) . classify oth
-            <$> Query.runQuery conn
-                (inIdList O.office O.officeId' $ map fst oth) ()
-        let ds = map (\d -> (d, Nothing)) del1
-                ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-        return $ map officeToUC $ os ++ ds
-    officeToUC ((i, DELETE), _)       = deleteData i
-    officeToUC ((i, UPDATE), Nothing) = deleteData i
-    officeToUC ((_, _),      Nothing) = Nothing
-    officeToUC ((_, act),    Just o)  = Just $ UpdateData
-        (fromIntegral $ O.officeId o)
-        act
-        "office"
-        "officeId"
-        [toJSON O.officeFields, toJSON [o]]
-    deleteData oid = Just $ UpdateData
-        oid'
-        DELETE
-        "office"
-        "officeId"
-        [toJSON ["officeId"::String], toJSON [oid']]
-      where
-        oid' :: Integer
-        oid' = fromIntegral oid
 
 updateContent :: MonadIO m
     => VersionupHisIds -> VersionupHisIds -> m (Map String [Value])
 updateContent from to = flip State.execStateT Map.empty $ do
     lift (content OH.officeHistory OH.id' from to)
         >>= State.modify . addData . toJSON
-    undefined
+    error "tmp"
   where
     addData = addData' DATA
     addData' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m

@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, RankNTypes, TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts, TemplateHaskell #-}
 
 module Controller.Update
     ( UpdateData(..)
@@ -17,7 +17,6 @@ import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Bifunctor (bimap)
 import Data.Int (Int32, Int64)
 import Data.List (partition)
-import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
 import Data.Monoid (mconcat)
@@ -40,7 +39,7 @@ import qualified Table.OfficePrice as OP
 import qualified Table.OfficeHistory as OH
 import Table.Types (TableName, PkColumn, Fields, TableContext)
 import qualified Table.Types as T
-import Util (clientError, initIf, (...))
+import Util (clientError, initIf)
 
 data UpdateResponseKey
     = DATA
@@ -74,6 +73,8 @@ data UpdateData = UpdateData
 
 deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
 
+type History = (Int32, FileAction)
+
 -- | from-toからoffice_idとactionのセットを取得するSQL
 --   古い順にソート
 history :: C.History a
@@ -88,19 +89,22 @@ history historyRelation k = relation' $ do
     asc $ h ! C.id'
     return (ph, (h ! C.officeId' >< h ! C.action'))
 
--- | したテーブルからfrom,toの間に更新されたエントリの
+-- | 指定したテーブルからfrom,toの間に更新されたエントリの
 --   office_id,actionの組のリストを取得
-targetHistories :: (MonadIO m, FromSql SqlValue a, C.History a)
+targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a, C.History a)
     => Connection
     -> Relation () a -- ^ テーブルSQL
     -> Pi a Int64 -- ^ from, toのキー
     -> VersionupHisIds -- ^ from
     -> VersionupHisIds -- ^ to
-    -> m [(Int32, String)]
-targetHistories conn r k =
-    Query.runQuery conn (history r k) ... curry (bimap oid oid)
+    -> m [History]
+targetHistories conn r k from to = uniq . map (second read) <$>
+    Query.runQuery conn (history r k) (curry (bimap oid oid) from to)
   where
     oid = fromIntegral . officeId
+    uniq = Map.elems . flip State.execState Map.empty . uniq'
+    uniq' []            = return ()
+    uniq' (h@(i, _):hs) = State.modify (Map.insert i h) >> uniq' hs
 
 inIdList :: (Integral i, Num j, ShowConstantTermsSQL j)
     => Relation () a -> Pi a j -> [i] -> Relation () a
@@ -110,8 +114,8 @@ inIdList rel k ids = relation $ do
     asc $ o ! k
     return o
 
-classify :: (a -> Int32) -> [(Int32, FileAction)] -> [a]
-    -> [((Int32, FileAction), Maybe a)]
+classify :: (a -> Int32) -> [History] -> [a]
+    -> [(History, Maybe a)]
 classify _ []     _      = []
 classify k (h:hs) []     = (h, Nothing):classify k hs []
 classify k (h:hs) (o:os)
@@ -123,17 +127,13 @@ toUpdateData :: ToJSON a
     -> Fields
     -> TableName
     -> PkColumn
-    -> ((Int32, FileAction), Maybe a)
+    -> (History, Maybe a)
     -> Maybe UpdateData
 toUpdateData _ _      t pk ((i, DELETE), _      ) = deleteData t pk i
 toUpdateData _ _      t pk ((i, UPDATE), Nothing) = deleteData t pk i
 toUpdateData _ _      _ _  (_          , Nothing) = Nothing
-toUpdateData k fields t pk ((_, act   ), Just o ) = Just $ UpdateData
-    (fromIntegral $ k o)
-    act
-    t
-    pk
-    [toJSON fields, toJSON [o]]
+toUpdateData k fields t pk ((_, act   ), Just o ) = Just
+    $ UpdateData (fromIntegral $ k o) act t pk [toJSON fields, toJSON [o]]
 
 deleteData :: String -> String -> Int32 -> Maybe UpdateData
 deleteData tabName keyName oid = Just $ UpdateData
@@ -148,56 +148,47 @@ deleteData tabName keyName oid = Just $ UpdateData
 
 updateDataTable :: (Functor m, MonadIO m, ToJSON a, FromSql SqlValue a)
     => Connection
-    -> [(Int32, FileAction)]
+    -> [History]
     -> TableContext a
     -> m [Maybe UpdateData]
 updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
     (del2, os) <- partition (isJust . snd) . classify k oth
-        <$> Query.runQuery conn
-            (inIdList rel k' $ map fst oth) ()
-    let ds = map (\d -> (d, Nothing)) del1
+        <$> Query.runQuery conn (inIdList rel k' $ map fst oth) ()
+    let os' = os
+            ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-    return $ map (toUpdateData k fields tab pk) $ os ++ ds
+    return $ map (toUpdateData k fields tab pk) os'
 
 updateData :: (MonadIO m, Functor m)
-    => Connection -> [(Int32, FileAction)] -> m [Maybe UpdateData]
+    => Connection -> [History] -> m [Maybe UpdateData]
 updateData conn hs = mconcat <$> sequence
     [ updateDataTable conn hs O.tableContext
     , updateDataTable conn hs OP.tableContext
     ]
 
-content :: (MonadIO m, FromSql SqlValue a, Ord a, C.History a, ToJSON a)
-    => Relation () a -> Pi a Int64
-    -> VersionupHisIds -> VersionupHisIds -> m [Maybe UpdateData]
-content r k from to = Query.query $ \conn ->
-    uniq <$> targetHistories conn r k from to
-        >>= updateData conn . map (second read)
-  where
-    uniq = Map.elems . flip State.execState Map.empty . f
-      where
-        f []            = return ()
-        f (h@(i, _):hs) = State.modify (Map.insert i h) >> f hs
+version :: ActionM (VersionupHisIds, VersionupHisIds)
+version = do
+    req <- parseParams "req"
+    let from = androidDataIds req
+        to   = serverDataIds req
+    when (from == to) $ fail "already updated"
+    return (from, to)
 
-updateContent :: MonadIO m
-    => VersionupHisIds -> VersionupHisIds -> m (Map String [Value])
-updateContent from to = flip State.execStateT Map.empty $ do
-    lift (content OH.officeHistory OH.id' from to)
-        >>= State.modify . addData . toJSON
-    error "tmp"
+contents :: Auth -> ActionM ()
+contents _ = do
+    (from, to) <- version
+    Query.query (\conn -> flip State.execStateT Map.empty $ do
+        lift (targetHistories conn OH.officeHistory OH.id' from to)
+            >>= updateData conn
+            >>= State.modify . addData . toJSON
+        error "tmp"
+      ) >>= Scotty.json
+  `catchError` \e -> do
+    liftIO $ print $ Scotty.showError e
+    clientError
   where
     addData = addData' DATA
     addData' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
       where
         k' = show k
-
-contents :: Auth -> ActionM ()
-contents _ = do
-    req <- parseParams "req"
-    let from = androidDataIds req
-        to   = serverDataIds req
-    when (from == to) $ fail "already updated"
-    updateContent from to >>= Scotty.json
-  `catchError` \e -> do
-    liftIO $ print $ Scotty.showError e
-    clientError

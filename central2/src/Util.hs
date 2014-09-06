@@ -4,7 +4,6 @@ module Util
     ( retry
     , fromJustM
     , clientError
-    , (...)
     , unique
     , initIf
     ) where
@@ -23,9 +22,6 @@ fromJustM f = maybe (return ()) f
 
 clientError :: ActionM ()
 clientError = Scotty.text ""
-
-(...) :: (d -> c) -> (a -> b -> d) -> (a -> b -> c)
-(...) = (.) . (.)
 
 unique :: Ord a => [a] -> [a]
 unique = Set.toList . Set.fromList

@@ -27,7 +27,6 @@ executable centralserver
                      , HDBC
                      , HDBC-mysql
                      , HDBC-session
-                     , HDBC-postgresql
                      , mtl
                      , names-th
                      , persistable-record
@@ -54,4 +53,4 @@ executable createtable
   ghc-options:         -Wall
   default-extensions:  OverloadedStrings
   build-depends:       base ==4.*
-                     , heredoc
+                     , here

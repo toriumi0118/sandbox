@@ -22,3 +22,11 @@ cabal sandbox add-source \
     lib/haskell-relational-record/relational-schemas \
     lib/haskell-relational-record/HDBC-session \
     lib/haskell-relational-record/relational-query-HDBC
+
+
+cd lib
+if [ ! -e hdbc-mysql ]; then
+	git clone git@github.com:bos/hdbc-mysql.git
+fi
+cd -
+cabal sandbox add-source lib/hdbc-mysql.git

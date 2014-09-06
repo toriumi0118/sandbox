@@ -3,7 +3,7 @@
 module Main where
 
 import Data.Char (toUpper)
-import Text.Heredoc (here)
+import Data.String.Here (i)
 import System.Environment (getArgs)
 import System.IO (withFile, hPutStr, IOMode(WriteMode))
 
@@ -35,7 +35,7 @@ toModuleName :: String -> String
 toModuleName = concat . map capitalize . split '_'
 
 content :: String -> String -> String
-content tableName moduleName = [here|
+content tableName moduleName = [i|
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
 module Table.${moduleName} where

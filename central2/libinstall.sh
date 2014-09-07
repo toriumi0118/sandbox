@@ -5,15 +5,16 @@ cabal sandbox init
 if [ ! -e lib ]; then
     mkdir lib
 fi
-cd lib
 
-if [ ! -e haskell-relational-record ]; then
+if [ ! -e lib/haskell-relational-record ]; then
+	cd lib
     git clone git@github.com:khibino/haskell-relational-record.git
+	cd -
 else
-    cd haskell-relational-record
+    cd lib/haskell-relational-record
     git pull
+	cd -
 fi
-cd -
 cabal sandbox add-source \
     lib/haskell-relational-record/names-th \
     lib/haskell-relational-record/sql-words \
@@ -29,4 +30,11 @@ if [ ! -e hdbc-mysql ]; then
 	git clone git@github.com:bos/hdbc-mysql.git
 fi
 cd -
-cabal sandbox add-source lib/hdbc-mysql.git
+cabal sandbox add-source lib/hdbc-mysql
+
+if [ ! -e lib/haskell-relational-record-driver-mysql ]; then
+	cd lib
+	git clone git@github.com:yunomu/haskell-relational-record-driver-mysql.git
+	cd -
+fi
+cabal sandbox add-source lib/haskell-relational-record-driver-mysql

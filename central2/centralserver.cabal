@@ -27,6 +27,7 @@ executable centralserver
                      , HDBC
                      , HDBC-mysql
                      , HDBC-session
+                     , lens
                      , mtl
                      , names-th
                      , persistable-record

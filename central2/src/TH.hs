@@ -2,6 +2,7 @@
 
 module TH where
 
+import Control.Lens
 import Data.Char (toLower)
 import Language.Haskell.TH
 
@@ -24,3 +25,8 @@ fields name = do
         f rs a (x:xs)
             | x == sp = f (reverse a:rs) [] xs
             | otherwise = f rs (x:a) xs
+
+makeLenses' :: Name -> Q [Dec]
+makeLenses' = makeLensesWith (lensRules & lensField .~ myFieldToDef)
+  where
+    myFieldToDef _ n = [TopName (mkName (nameBase n))]

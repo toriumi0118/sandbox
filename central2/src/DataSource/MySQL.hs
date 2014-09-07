@@ -26,6 +26,7 @@ connect config = fmap Connection $ retry 5 $ connectMySQL $
         fromJustM (\u -> State.modify $ \i -> i { mysqlUser = u }) $ dbUser config
         fromJustM (\p -> State.modify $ \i -> i { mysqlPassword = p }) $ dbPassword config
         fromJustM (\p -> State.modify $ \i -> i { mysqlPort = p }) $ dbPort config
+        fromJustM (\p -> State.modify $ \i -> i { mysqlUnixSocket = p }) $ dbSocket config
 
 driver :: IConnection conn => Driver conn
 driver = driverMySQL

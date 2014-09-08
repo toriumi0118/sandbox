@@ -4,18 +4,19 @@ module Main where
 
 import Data.Char (toUpper)
 import Data.String.Here (i)
+import Prelude hiding (mod)
 import System.Environment (getArgs)
 import System.IO (withFile, hPutStr, IOMode(WriteMode))
 
 main :: IO ()
 main = do
-    args <- getArgs
-    let tableName = args !! 0
-    let moduleName = toModuleName tableName
-    if length args == 0
-        then putStrLn "Usage: createtable tableName"
-        else withFile (fileName moduleName) WriteMode $ \h ->
-            hPutStr h $ content tableName moduleName
+    tableNames <- getArgs
+    let names = zip tableNames $ map toModuleName tableNames
+    if length tableNames == 0
+        then putStrLn "Usage: createtable tableName.."
+        else flip mapM_ names $ \(tab, mod) ->
+            withFile (fileName mod) WriteMode $ \h ->
+                hPutStr h $ content tab mod
   where
     fileName moduleName = "src/Table/" ++ moduleName ++ ".hs"
 

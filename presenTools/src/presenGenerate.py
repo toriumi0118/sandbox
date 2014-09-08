@@ -11,7 +11,7 @@ from operator import itemgetter
 
 def resize():
     shrinkFactor = 4
-    jpgQuality = 90
+    jpgQuality = qualitySlider.get()
     i = 0
     for filename in os.listdir(inputDirectory):
         im = Image.open(inputDirectory + filename)
@@ -19,6 +19,19 @@ def resize():
         smaller = im.resize(targetDimensions,Image.ANTIALIAS)
 
         smaller.save(outputDirectory + filename,'JPEG',quality=jpgQuality)
+
+
+def resizeToPng():
+    shrinkFactor = 4
+    jpgQuality = qualitySlider.get()
+    i = 0
+    for filename in os.listdir(inputDirectory):
+        im = Image.open(inputDirectory + filename)
+        targetDimensions = tuple(x/shrinkFactor for x in im.size)
+        smaller = im.resize(targetDimensions,Image.ANTIALIAS)
+        outputFilename = filename.replace(".jpg",".png")
+
+        smaller.save(outputDirectory + outputFilename,'PNG',quality=jpgQuality)
 
 def getCaptions():
     files = os.listdir(outputDirectory)
@@ -77,8 +90,9 @@ def generateImageDivs(captions):
     i = 1
     for image in captions:
         (caption,filename,(x,y),displayCheckbox) = image
+        extension = filename.split(".")[1]
         divText = divTemplate.replace("##IMAGE_CAPTION##",caption.get())
-        divText = divText.replace("##IMAGE_FILE_NAME##","ph"+str(i)+".jpg")
+        divText = divText.replace("##IMAGE_FILE_NAME##","ph"+str(i)+"."+extension)
         divText = divText.replace("##X##","660")
         divText = divText.replace("##Y##",str(calculateWidth(x,y)))
         imageDivs = imageDivs +"\n\n"+ divText
@@ -105,13 +119,14 @@ def createFiles():
     captions.reverse()
     
     (caption,filename,(x,y),displayCheck) = mainImage
-    shutil.copyfile(outputDirectory + filename,"./img/main.jpg") 
+    filename, extension= filename.split(".")
+    shutil.copyfile(outputDirectory + filename+"."+extension,"./img/main."+extension) 
 
 
     template = file("template.html").read()
     index = template.replace("##TITLE##",title.get().encode('utf-8'))
     index = index.replace("##MAIN_CAPTION##",caption.get().encode('utf-8'))
-    index = index.replace("##MAIN_FILENAME##","main.jpg")
+    index = index.replace("##MAIN_FILENAME##","main."+extension)
 
 
     displayImages = []
@@ -133,7 +148,7 @@ def createFiles():
     for image in outputImages:
         (caption,filename,(x,y),displayCheck) = image
         src = outputDirectory + filename
-        dest = "./img/"+ "ph" +str(i) + ".jpg"
+        dest = "./img/"+ "ph" +str(i) + "."+extension
         shutil.copyfile(src,dest)
         i = i+1
 
@@ -154,19 +169,31 @@ def makeEntry(parent, caption, width=None, **options):
 
 
 
-def gui():
+
+
+if __name__ == "__main__":
+
     mainGui = Tkinter.Tk()
 
-    button = Tkinter.Button(mainGui, text = "Resize files", command = resize)
+    Tkinter.Label(mainGui,text="Quality").pack()
+    qualitySlider = Tkinter.Scale(mainGui, from_=1, to=100,orient=Tkinter.HORIZONTAL)
+    qualitySlider.set(90)
+    qualitySlider.pack()
+    
+    button = Tkinter.Button(mainGui, text = "Resize files to JPG", command = resize)
+    button.pack()
+
+
+
+    button = Tkinter.Button(mainGui, text = "Resize files to PNG", command = resizeToPng)
     button.pack()
 
     button = Tkinter.Button(mainGui, text = "Create HTML", command = createFiles )
     button.pack()
 
-    mainGui.mainloop()
 
-if __name__ == "__main__":
-    gui()
+    mainGui.mainloop()
+    
     sys.exit()
 
             

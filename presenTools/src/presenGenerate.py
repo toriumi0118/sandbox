@@ -1,3 +1,4 @@
+#encoding is utf-8
 import Image
 import ImageTk
 import Tkinter
@@ -5,6 +6,7 @@ import os
 import shutil
 import sys
 from tkFileDialog import askdirectory
+from operator import itemgetter
 
 
 def resize():
@@ -15,11 +17,8 @@ def resize():
         im = Image.open(inputDirectory + filename)
         targetDimensions = tuple(x/shrinkFactor for x in im.size)
         smaller = im.resize(targetDimensions,Image.ANTIALIAS)
-        if i == 0:
-            smaller.save(outputDirectory + "main.jpg",'JPEG',quality=jpgQuality)
-        else:
-            smaller.save(outputDirectory + "ph"+str(i)+".jpg",'JPEG',quality=jpgQuality)
-        i = i+1
+
+        smaller.save(outputDirectory + filename,'JPEG',quality=jpgQuality)
 
 def getCaptions():
     files = os.listdir(outputDirectory)
@@ -54,9 +53,12 @@ def getCaptions():
         label.pack()
         
         caption = Tkinter.StringVar()
-        captions.append((caption,filename,(x,y)))
+        displayCheck = Tkinter.IntVar()
+        captions.append((caption,filename,(x,y),displayCheck))
         textInput = Tkinter.Entry(imageFrame,textvariable=caption)
         textInput.pack()
+
+        Tkinter.Checkbutton(imageFrame,text="omake",variable=displayCheck).pack()
 
         imageFrame.pack(side=Tkinter.LEFT)
         
@@ -72,13 +74,15 @@ def getCaptions():
 def generateImageDivs(captions):
     imageDivs = ""
     divTemplate = file("imageDiv.html").read()
+    i = 1
     for image in captions:
-        (caption,filename,(x,y)) = image
+        (caption,filename,(x,y),displayCheckbox) = image
         divText = divTemplate.replace("##IMAGE_CAPTION##",caption.get())
-        divText = divText.replace("##IMAGE_FILE_NAME##",filename)
+        divText = divText.replace("##IMAGE_FILE_NAME##","ph"+str(i)+".jpg")
         divText = divText.replace("##X##","660")
         divText = divText.replace("##Y##",str(calculateWidth(x,y)))
         imageDivs = imageDivs +"\n\n"+ divText
+        i = i +1
     return imageDivs
 
 def calculateWidth(x,y):
@@ -100,23 +104,44 @@ def createFiles():
     mainImage = captions.pop()
     captions.reverse()
     
-    (caption,filename,(x,y)) = mainImage
+    (caption,filename,(x,y),displayCheck) = mainImage
+    shutil.copyfile(outputDirectory + filename,"./img/main.jpg") 
+
 
     template = file("template.html").read()
     index = template.replace("##TITLE##",title.get().encode('utf-8'))
     index = index.replace("##MAIN_CAPTION##",caption.get().encode('utf-8'))
-    index = index.replace("##MAIN_FILENAME##",filename)
-    imageDivs = generateImageDivs(captions)
+    index = index.replace("##MAIN_FILENAME##","main.jpg")
+
+
+    displayImages = []
+    omakeImages = []
+    for image in captions:
+        (caption,filename,(x,y),displayCheck) = image
+        if displayCheck.get() == 0:
+             displayImages.append(image)
+        else:
+            omakeImages.append(image)
+   
+    imageDivs = generateImageDivs(displayImages)
     index = index.replace("##IMAGES##",imageDivs.encode('utf-8'))
+
+    #save files in new order
+    outputImages = displayImages + omakeImages
+
+    i=1
+    for image in outputImages:
+        (caption,filename,(x,y),displayCheck) = image
+        src = outputDirectory + filename
+        dest = "./img/"+ "ph" +str(i) + ".jpg"
+        shutil.copyfile(src,dest)
+        i = i+1
 
     try:
         f = open('index.html', 'w')
         f.write(index)
     finally:
         f.close()
-        
-    for filename in os.listdir(outputDirectory):
-        shutil.copy(outputDirectory+filename,"./img")
         
 
 def makeEntry(parent, caption, width=None, **options):

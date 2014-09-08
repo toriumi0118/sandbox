@@ -12,11 +12,13 @@ import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State (StateT)
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Bifunctor (bimap)
 import Data.Int (Int32, Int64)
 import Data.List (partition)
+import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
 import Data.Monoid (mconcat)
@@ -29,12 +31,14 @@ import qualified Web.Scotty.Internal.Types as Scotty
 import Web.Scotty.Binding.Play (parseParams)
 
 import Auth (Auth)
-import qualified Controller.Update.Office
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
+import qualified Controller.Update.Kyotaku
+import qualified Controller.Update.Office
 import DataSource (Connection)
 import qualified Query
+import qualified Table.KyotakuHistory as KH
 import qualified Table.OfficeHistory as OH
 import Table.Types (TableName, PkColumn, Fields, TableContext)
 import qualified Table.Types as T
@@ -160,10 +164,8 @@ updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
     return $ map (toUpdateData k fields tab pk) os'
 
 updateData :: (MonadIO m, Functor m)
-    => Connection -> [History] -> m [Maybe UpdateData]
-updateData conn hs = mconcat <$> sequence (map (updateDataTable conn hs) $ concat
-    [ Controller.Update.Office.updateData
-    ])
+    => Connection -> [TableContext] -> [History] -> m [Maybe UpdateData]
+updateData conn ts hs = mconcat <$> sequence (map (updateDataTable conn hs) ts)
 
 version :: ActionM (VersionupHisIds, VersionupHisIds)
 version = do
@@ -173,20 +175,34 @@ version = do
     when (from == to) $ fail "already updated"
     return (from, to)
 
+addData :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a)
+    => Connection
+    -> Relation () a
+    -> Pi a Int64
+    -> [TableContext]
+    -> VersionupHisIds
+    -> VersionupHisIds
+    -> StateT (Map String [Value]) m ()
+addData conn rel hid tables from to =
+    lift (targetHistories conn rel hid from to)
+    >>= updateData conn tables
+    >>= State.modify . f . toJSON
+  where
+    f = f' DATA
+    f' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
+      where
+        k' = show k
+
 contents :: Auth -> ActionM ()
 contents _ = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $ do
-        lift (targetHistories conn OH.officeHistory OH.id' from to)
-            >>= updateData conn
-            >>= State.modify . addData . toJSON
+        addData conn OH.officeHistory OH.id'
+            Controller.Update.Office.updateData from to
+        addData conn KH.kyotakuHistory KH.id'
+            Controller.Update.Kyotaku.updateData from to
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do
     liftIO $ print $ Scotty.showError e
     clientError
-  where
-    addData = addData' DATA
-    addData' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
-      where
-        k' = show k

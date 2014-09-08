@@ -16,7 +16,6 @@ import Database.HDBC.Record (runInsert)
 import Database.Relational.Query
 import GHC.Int (Int32, Int64)
 import Prelude hiding (id)
-import qualified Prelude
 import Web.Scotty (ActionM)
 import qualified Web.Scotty as Scotty
 import Web.Scotty.Binding.Play (parseParams)

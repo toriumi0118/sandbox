@@ -10,7 +10,7 @@ import TH
 
 defineTable "office_price"
 deriveJSON defaultOptions ''OfficePrice
-fields ''OfficePrice
+mkFields ''OfficePrice
 
 tableContext :: TableContext OfficePrice
 tableContext = TableContext
@@ -19,4 +19,4 @@ tableContext = TableContext
     officeId'
     "office_price"
     "officeId"
-    officePriceFields
+    fields

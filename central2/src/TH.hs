@@ -6,17 +6,15 @@ import Control.Lens
 import Data.Char (toLower)
 import Language.Haskell.TH
 
-fields :: Name -> DecsQ
-fields name = do
+mkFields :: Name -> DecsQ
+mkFields name = do
     (TyConI (DataD _ _ _ [RecC _ vsts] _)) <- reify name
     let rs = listE $ map (litE . stringL . baseName . show . fst3) vsts
     fun <- valD (varP funName) (normalB rs) []
     dec <- sigD funName [t|[String]|]
     return [dec, fun]
   where
-    toCamel [] = []
-    toCamel (c:cs) = toLower c:cs
-    funName = mkName $ toCamel (baseName $ show name) ++ "Fields"
+    funName = mkName "fields"
     fst3 (a,_,_) = a
     baseName = last . split '.'
     split sp = f [] []

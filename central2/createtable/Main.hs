@@ -11,12 +11,21 @@ import System.IO (withFile, hPutStr, IOMode(WriteMode))
 main :: IO ()
 main = do
     tableNames <- getArgs
+    case tableNames of
+        []        -> do
+            putStrLn "Usage: createtable [Option] tableName.."
+            putStrLn "\t-s key: Synchronized"
+        ("-s":k:ts) -> createTable ts $ Versionup k
+        (_:_)     -> createTable tableNames Standard
+
+data TableType = Standard | Versionup String
+
+createTable :: [String] -> TableType -> IO ()
+createTable tableNames typ = do
     let names = zip tableNames $ map toModuleName tableNames
-    if length tableNames == 0
-        then putStrLn "Usage: createtable tableName.."
-        else flip mapM_ names $ \(tab, mod) ->
-            withFile (fileName mod) WriteMode $ \h ->
-                hPutStr h $ content tab mod
+    flip mapM_ names $ \(tab, mod) ->
+        withFile (fileName mod) WriteMode $ \h ->
+            hPutStr h $ content typ tab mod
   where
     fileName moduleName = "src/Table/" ++ moduleName ++ ".hs"
 
@@ -35,8 +44,8 @@ capitalize (c:cs) = toUpper c:cs
 toModuleName :: String -> String
 toModuleName = concat . map capitalize . split '_'
 
-content :: String -> String -> String
-content tableName moduleName = [i|
+content :: TableType -> String -> String -> String
+content Standard tableName moduleName = [i|
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
 module Table.${moduleName} where
@@ -48,4 +57,29 @@ import DataSource (defineTable)
 defineTable "${tableName}"
 
 deriveJSON defaultOptions ''${moduleName}
+|]
+content (Versionup keyName) tableName moduleName = [i|
+{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+
+module Table.${moduleName} where
+
+import Data.Aeson.TH (deriveJSON, defaultOptions)
+
+import Controller.Types.Class ()
+import DataSource (defineTable)
+import Table.Types (TableContext(TableContext))
+import TH (mkFields)
+
+defineTable "${tableName}"
+deriveJSON defaultOptions ''${moduleName}
+mkFields ''${moduleName}
+
+tableContext :: TableContext ${moduleName}
+tableContext = TableContext
+    ${tableName}
+    ${keyName}
+    ${keyName}'
+    "${tableName}"
+    "${keyName}"
+    fields
 |]

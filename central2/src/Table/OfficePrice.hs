@@ -12,11 +12,11 @@ defineTable "office_price"
 deriveJSON defaultOptions ''OfficePrice
 mkFields ''OfficePrice
 
-tableContext :: TableContext OfficePrice
+tableContext :: TableContext
 tableContext = TableContext
     officePrice
     officeId
     officeId'
     "office_price"
-    "officeId"
+    "office_id"
     fields

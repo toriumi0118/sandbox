@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelDriveRange where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_drive_range"
+deriveJSON defaultOptions ''RelDriveRange
+mkFields ''RelDriveRange
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relDriveRange
     officeId
     officeId'
-    "office"
+    "rel_drive_range"
     "office_id"
     fields

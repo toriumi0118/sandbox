@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelBashJet where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_bash_jet"
+deriveJSON defaultOptions ''RelBashJet
+mkFields ''RelBashJet
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relBashJet
     officeId
     officeId'
-    "office"
+    "rel_bash_jet"
     "office_id"
     fields

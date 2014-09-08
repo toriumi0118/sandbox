@@ -3,7 +3,6 @@
 module TH where
 
 import Control.Lens
-import Data.Char (toLower)
 import Language.Haskell.TH
 
 mkFields :: Name -> DecsQ

@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelBrainTraining where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_brain_training"
+deriveJSON defaultOptions ''RelBrainTraining
+mkFields ''RelBrainTraining
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relBrainTraining
     officeId
     officeId'
-    "office"
+    "rel_brain_training"
     "office_id"
     fields

@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelSuperPlayer where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_super_player"
+deriveJSON defaultOptions ''RelSuperPlayer
+mkFields ''RelSuperPlayer
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relSuperPlayer
     officeId
     officeId'
-    "office"
+    "rel_super_player"
     "office_id"
     fields

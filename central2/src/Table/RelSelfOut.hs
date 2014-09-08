@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelSelfOut where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_self_out"
+deriveJSON defaultOptions ''RelSelfOut
+mkFields ''RelSelfOut
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relSelfOut
     officeId
     officeId'
-    "office"
+    "rel_self_out"
     "office_id"
     fields

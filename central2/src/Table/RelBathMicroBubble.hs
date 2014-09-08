@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelBathMicroBubble where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_bath_micro_bubble"
+deriveJSON defaultOptions ''RelBathMicroBubble
+mkFields ''RelBathMicroBubble
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relBathMicroBubble
     officeId
     officeId'
-    "office"
+    "rel_bath_micro_bubble"
     "office_id"
     fields

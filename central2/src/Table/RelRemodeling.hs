@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelRemodeling where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_remodeling"
+deriveJSON defaultOptions ''RelRemodeling
+mkFields ''RelRemodeling
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relRemodeling
     officeId
     officeId'
-    "office"
+    "rel_remodeling"
     "office_id"
     fields

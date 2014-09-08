@@ -52,9 +52,6 @@ result a = do
             )
     Scotty.text "OK"
 
-instance ProductConstructor (Int32 -> Int64) where
-    productConstructor = fromIntegral
-
 resultsQuery :: Relation () (UpdateResult, Device)
 resultsQuery = relation $ do
     r <- query UR.updateResult

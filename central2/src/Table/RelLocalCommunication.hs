@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelLocalCommunication where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_local_communication"
+deriveJSON defaultOptions ''RelLocalCommunication
+mkFields ''RelLocalCommunication
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relLocalCommunication
     officeId
     officeId'
-    "office"
+    "rel_local_communication"
     "office_id"
     fields

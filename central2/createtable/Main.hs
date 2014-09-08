@@ -2,7 +2,7 @@
 
 module Main where
 
-import Data.Char (toUpper)
+import Data.Char (toUpper, toLower)
 import Data.String.Here (i)
 import Prelude hiding (mod)
 import System.Environment (getArgs)
@@ -44,6 +44,10 @@ capitalize (c:cs) = toUpper c:cs
 toModuleName :: String -> String
 toModuleName = concat . map capitalize . split '_'
 
+headLower :: String -> String
+headLower []     = []
+headLower (c:cs) = toLower c:cs
+
 content :: TableType -> String -> String -> String
 content Standard tableName moduleName = [i|
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
@@ -74,12 +78,15 @@ defineTable "${tableName}"
 deriveJSON defaultOptions ''${moduleName}
 mkFields ''${moduleName}
 
-tableContext :: TableContext ${moduleName}
+tableContext :: TableContext
 tableContext = TableContext
-    ${tableName}
-    ${keyName}
-    ${keyName}'
+    ${relName}
+    ${relKeyName}
+    ${relKeyName}'
     "${tableName}"
     "${keyName}"
     fields
 |]
+  where
+    relName = headLower moduleName
+    relKeyName = headLower $ toModuleName keyName

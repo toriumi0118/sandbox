@@ -29,13 +29,12 @@ import qualified Web.Scotty.Internal.Types as Scotty
 import Web.Scotty.Binding.Play (parseParams)
 
 import Auth (Auth)
+import qualified Controller.Update.Office
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
 import DataSource (Connection)
 import qualified Query
-import qualified Table.Office as O
-import qualified Table.OfficePrice as OP
 import qualified Table.OfficeHistory as OH
 import Table.Types (TableName, PkColumn, Fields, TableContext)
 import qualified Table.Types as T
@@ -146,10 +145,10 @@ deleteData tabName keyName oid = Just $ UpdateData
     oid' :: Integer
     oid' = fromIntegral oid
 
-updateDataTable :: (Functor m, MonadIO m, ToJSON a, FromSql SqlValue a)
+updateDataTable :: (Functor m, MonadIO m)
     => Connection
     -> [History]
-    -> TableContext a
+    -> TableContext
     -> m [Maybe UpdateData]
 updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
@@ -162,10 +161,9 @@ updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
 
 updateData :: (MonadIO m, Functor m)
     => Connection -> [History] -> m [Maybe UpdateData]
-updateData conn hs = mconcat <$> sequence
-    [ updateDataTable conn hs O.tableContext
-    , updateDataTable conn hs OP.tableContext
-    ]
+updateData conn hs = mconcat <$> sequence (map (updateDataTable conn hs) $ concat
+    [ Controller.Update.Office.updateData
+    ])
 
 version :: ActionM (VersionupHisIds, VersionupHisIds)
 version = do

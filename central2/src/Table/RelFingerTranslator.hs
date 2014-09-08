@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelFingerTranslator where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_finger_translator"
+deriveJSON defaultOptions ''RelFingerTranslator
+mkFields ''RelFingerTranslator
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relFingerTranslator
     officeId
     officeId'
-    "office"
+    "rel_finger_translator"
     "office_id"
     fields

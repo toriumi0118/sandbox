@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.RelElevator where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "rel_elevator"
+deriveJSON defaultOptions ''RelElevator
+mkFields ''RelElevator
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    relElevator
     officeId
     officeId'
-    "office"
+    "rel_elevator"
     "office_id"
     fields

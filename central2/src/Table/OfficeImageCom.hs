@@ -1,24 +1,25 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.OfficeImageCom where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
+import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
 import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "office_image_com"
+deriveJSON defaultOptions ''OfficeImageCom
+mkFields ''OfficeImageCom
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
-    officeId
-    officeId'
-    "office"
+    officeImageCom
+    (fromIntegral . officeId)
+    (fromIntegral |$| officeId')
+    "office_image_com"
     "office_id"
     fields

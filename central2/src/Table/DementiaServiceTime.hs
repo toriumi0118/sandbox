@@ -1,7 +1,7 @@
 
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.Office where
+module Table.DementiaServiceTime where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
@@ -10,15 +10,15 @@ import DataSource (defineTable)
 import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
-defineTable "office"
-deriveJSON defaultOptions ''Office
-mkFields ''Office
+defineTable "dementia_service_time"
+deriveJSON defaultOptions ''DementiaServiceTime
+mkFields ''DementiaServiceTime
 
 tableContext :: TableContext
 tableContext = TableContext
-    office
+    dementiaServiceTime
     officeId
     officeId'
-    "office"
+    "dementia_service_time"
     "office_id"
     fields

@@ -10,6 +10,7 @@ imgDir = "./img/"
 officesDir = "/home/wellmotion/centralserver/data/office/"
 
 mainGui = Tk()
+mainGui.resizable(0,0)
 
 serverAddress = StringVar()
 serverPort = StringVar()
@@ -21,13 +22,13 @@ databaseName = StringVar()
 databasePassword = StringVar()
 
 
-serverAddress.set('133.242.18.214')
-serverPort.set('54649')
-serverUsername.set('wellmotion')
+serverAddress.set('133.242.17.206')
+serverPort.set('10044')
+serverUsername.set('welmo')
 serverPassword.set('')
 
-databaseUser.set("root")
-databaseName.set("dev")
+databaseUser.set("prod")
+databaseName.set("release")
 databasePassword.set("")
 
 
@@ -38,14 +39,17 @@ uploaderName = "presen_tool"
 
 
 def getConnection():
-    
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(serverAddress.get(),
-                int(serverPort.get()),
-                username=serverUsername.get(),
-                password=serverPassword.get(),
-                key_filename='./presen_key')
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(serverAddress.get(),
+                    int(serverPort.get()),
+                    username=serverUsername.get(),
+                    password=serverPassword.get(),
+                    key_filename='./presen_key')
+    except:
+        tkMessageBox.showerror("Error","サバーに接続できません")
+        return
     return ssh
     
 
@@ -94,11 +98,11 @@ def upload():
     stdin, stdout, stderr = ssh.exec_command("chmod 755 -R %s" % officeDir)
     type(stdin)
 
-    #stdin, stdout, stderr = ssh.exec_command('mysql -u %s -p %s -e "INSERT INTO office_presentation_history (office_id, editor, action) value (%d, \'%s\', \'UPDATE\' )"' % (databaseUser.get(),databaseName.get(),oid,uploaderName))
-    #type(stdin)
-    #stdin.write(databasePassword.get() + "\n")
-    #stdin.flush()
-
+    stdin, stdout, stderr = ssh.exec_command('mysql -u %s -p %s -e "INSERT INTO office_presentation_history (office_id, editor, action) value (%d, \'%s\', \'UPDATE\' )"' % (databaseUser.get(),databaseName.get(),oid,uploaderName))
+    type(stdin)
+    stdin.write(databasePassword.get() + "\n")
+    stdin.flush()
+    print stderr.read()
     
     ssh.close()
 
@@ -117,10 +121,11 @@ def delete():
         tkMessageBox.showerror("Error","Problem Deleting Files")
 
 
-    #stdin, stdout, stderr = ssh.exec_command('mysql -u %s -p %s -e "INSERT INTO office_presentation_history (office_id, editor, action) value (%d, \'%s\', \'DELETE\' )"' % (databaseUser.get(),databaseName.get(),oid,uploaderName))
-    #type(stdin)
-    #stdin.write(databasePassword.get() + "\n")
-    #stdin.flush()
+    stdin, stdout, stderr = ssh.exec_command('mysql -u %s -p %s -e "INSERT INTO office_presentation_history (office_id, editor, action) value (%d, \'%s\', \'DELETE\' )"' % (databaseUser.get(),databaseName.get(),oid,uploaderName))
+    type(stdin)
+    stdin.write(databasePassword.get() + "\n")
+    stdin.flush()
+    print stderr.read()
     return
 
     
@@ -141,6 +146,7 @@ def getOfficeNameFromServer():
     stdin.write(databasePassword.get() + "\n")
     stdin.flush()
 
+    print stderr.read()
     officeName = stdout.read()
     ssh.close()
     return officeName
@@ -159,7 +165,6 @@ Label(f,text="office_id").pack(side=LEFT)
 officeId = Entry(f)
 officeId.pack(side=LEFT)
 f.pack()
-
 
 
 button = Button(mainGui, text = "Check Office Name", command = checkOfficeName)
@@ -197,11 +202,13 @@ serverUsernameEntry = Entry(f,textvariable=serverUsername)
 serverUsernameEntry.pack(side=LEFT)
 f.pack()
 
-f = Frame()
-Label(f,text="Private Key Password").pack(side=LEFT)
-serverPasswordEntry = Entry(f,textvariable=serverPassword,show="*")
-serverPasswordEntry.pack(side=LEFT)
-f.pack()
+#パスワードなしの鍵ファイルを使っています
+
+##f = Frame()
+##Label(f,text="Private Key Password").pack(side=LEFT)
+##serverPasswordEntry = Entry(f,textvariable=serverPassword,show="*")
+##serverPasswordEntry.pack(side=LEFT)
+##f.pack()
 
 separator = Frame(height=2, bd=1, relief=SUNKEN)
 separator.pack(fill=X, padx=5, pady=5)

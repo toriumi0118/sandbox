@@ -17,11 +17,18 @@
 
 ３．imageResize.exeを実行する。
 
-４．Resize Imagesをクリックして、画像ファイルが自動的に圧縮され、outputFilesに保存。
+４．A)ｖ５．１まで
+    Resize Images to png をクリックして、画像ファイルが自動的に圧縮され、outputFilesに保存。
+
+４．B)ｖ５．２から
+    Resize Images to jpg をクリックして、画像ファイルが自動的に圧縮され、outputFilesに保存。
 
 ５．create HTMLをクリックして、タイトル、写真の表題を書く。omakeをチェックしたら
 　　プレゼンテーションページに表現しない。
 ６．Submitをクリックして、ブラウザーでindex.htmlファイルを確認する。
+
+
+スライダーで画質を調節できるけど、90でファイルが軽くても、画質もほぼかわらない。
 
 
 ＝＝＝＝＝＝＝＝＝＝

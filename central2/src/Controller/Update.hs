@@ -39,7 +39,9 @@ import qualified Controller.Update.Office
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
+import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeHistory as OH
+import qualified Table.OfficePdf
 import Table.Types (TableName, PkColumn, Fields, TableContext)
 import qualified Table.Types as T
 import Util (clientError, initIf)
@@ -201,6 +203,8 @@ contents _ = do
             Controller.Update.Office.updateData from to
         addData conn KH.kyotakuHistory KH.id'
             Controller.Update.Kyotaku.updateData from to
+        addData conn OAH.officeAdHistory OAH.id'
+            [Table.OfficePdf.tableContext] from to
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

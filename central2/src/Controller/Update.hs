@@ -36,10 +36,12 @@ import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.Office
+import qualified Controller.Update.OfficeCase
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
 import qualified Table.OfficeAdHistory as OAH
+import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficePdf
 import Table.Types (TableName, PkColumn, Fields, TableContext)
@@ -205,6 +207,8 @@ contents _ = do
             Controller.Update.Kyotaku.updateData from to
         addData conn OAH.officeAdHistory OAH.id'
             [Table.OfficePdf.tableContext] from to
+        addData conn OCH.officeCaseHistory OCH.id'
+            Controller.Update.OfficeCase.updateData from to
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

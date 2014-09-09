@@ -44,6 +44,7 @@ import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficePdf
+import qualified Table.OfficeSpPriceHistory as OSPH
 import Table.Types (TableName, PkColumn, Fields, TableContext)
 import qualified Table.Types as T
 import Util (clientError, initIf)
@@ -209,6 +210,8 @@ contents _ = do
             [Table.OfficePdf.tableContext] from to
         addData conn OCH.officeCaseHistory OCH.id'
             Controller.Update.OfficeCase.updateData from to
+        addData conn OSPH.officeSpPriceHistory OSPH.id'
+            [Table.OfficePdf.tableContext] from to
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

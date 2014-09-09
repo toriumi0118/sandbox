@@ -6,15 +6,15 @@ module Table.RelExtra where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_extra"
 deriveJSON defaultOptions ''RelExtra
 mkFields ''RelExtra
 
-tableContext :: TableContext
+tableContext :: TableContext RelExtra
 tableContext = TableContext
     relExtra
     officeId

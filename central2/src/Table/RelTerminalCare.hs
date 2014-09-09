@@ -6,15 +6,15 @@ module Table.RelTerminalCare where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_terminal_care"
 deriveJSON defaultOptions ''RelTerminalCare
 mkFields ''RelTerminalCare
 
-tableContext :: TableContext
+tableContext :: TableContext RelTerminalCare
 tableContext = TableContext
     relTerminalCare
     officeId

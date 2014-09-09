@@ -7,15 +7,15 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "office_image_com"
 deriveJSON defaultOptions ''OfficeImageCom
 mkFields ''OfficeImageCom
 
-tableContext :: TableContext
+tableContext :: TableContext OfficeImageCom
 tableContext = TableContext
     officeImageCom
     (fromIntegral . officeId)

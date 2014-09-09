@@ -6,15 +6,15 @@ module Table.RelSocialAid where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_social_aid"
 deriveJSON defaultOptions ''RelSocialAid
 mkFields ''RelSocialAid
 
-tableContext :: TableContext
+tableContext :: TableContext RelSocialAid
 tableContext = TableContext
     relSocialAid
     officeId

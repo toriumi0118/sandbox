@@ -6,15 +6,15 @@ module Table.RelAddFeePrecaution where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_add_fee_precaution"
 deriveJSON defaultOptions ''RelAddFeePrecaution
 mkFields ''RelAddFeePrecaution
 
-tableContext :: TableContext
+tableContext :: TableContext RelAddFeePrecaution
 tableContext = TableContext
     relAddFeePrecaution
     officeId

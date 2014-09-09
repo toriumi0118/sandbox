@@ -14,13 +14,11 @@ import qualified Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State (StateT)
 import Data.Aeson (Value, ToJSON(toJSON))
-import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Bifunctor (bimap)
 import Data.Int (Int32, Int64)
-import Data.List (partition)
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (fromMaybe, isJust)
+import Data.Maybe (fromMaybe)
 import Data.Monoid (mconcat)
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
@@ -37,6 +35,7 @@ import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
+import Controller.Update.UpdateData hiding (officeId)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
@@ -44,10 +43,9 @@ import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficePdf
-import qualified Table.OfficeSpPriceHistory as OSPH
-import Table.Types (TableName, PkColumn, Fields, TableContext)
-import qualified Table.Types as T
-import Util (clientError, initIf)
+--import qualified Table.OfficeSpPriceHistory as OSPH
+--import Table.Types (TableName, PkColumn, Fields, TableContext)
+import Util (clientError)
 
 data UpdateResponseKey
     = DATA
@@ -65,23 +63,6 @@ data UpdateResponseKey
     | FILE_TYPE
     | FILE_ACtION
   deriving (Eq, Ord, Show)
-
-data FileAction = INSERT | DELETE | UPDATE
-  deriving (Show, Read, Eq)
-
-deriveJSON defaultOptions ''FileAction
-
-data UpdateData = UpdateData
-    { index :: Integer
-    , action :: FileAction
-    , table :: TableName
-    , pkColumn :: PkColumn
-    , data' :: [Value]
-    }
-
-deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
-
-type History = (Int32, FileAction)
 
 -- | from-toからoffice_idとactionのセットを取得するSQL
 --   古い順にソート
@@ -114,63 +95,14 @@ targetHistories conn r k from to = uniq . map (second read) <$>
     uniq' []            = return ()
     uniq' (h@(i, _):hs) = State.modify (Map.insert i h) >> uniq' hs
 
-inIdList :: (Integral i, Num j, ShowConstantTermsSQL j)
-    => Relation () a -> Pi a j -> [i] -> Relation () a
-inIdList rel k ids = relation $ do
-    o <- query rel
-    wheres $ o ! k `in'` values (map fromIntegral ids)
-    asc $ o ! k
-    return o
-
-classify :: (a -> Int32) -> [History] -> [a]
-    -> [(History, Maybe a)]
-classify _ []     _      = []
-classify k (h:hs) []     = (h, Nothing):classify k hs []
-classify k (h:hs) (o:os)
-    | fst h == k o       = (h, Just o):classify k hs os
-    | otherwise          = (h, Nothing):classify k hs (o:os)
-
-toUpdateData :: ToJSON a
-    => (a -> Int32)
-    -> Fields
-    -> TableName
-    -> PkColumn
-    -> (History, Maybe a)
-    -> Maybe UpdateData
-toUpdateData _ _      t pk ((i, DELETE), _      ) = deleteData t pk i
-toUpdateData _ _      t pk ((i, UPDATE), Nothing) = deleteData t pk i
-toUpdateData _ _      _ _  (_          , Nothing) = Nothing
-toUpdateData k fields t pk ((_, act   ), Just o ) = Just
-    $ UpdateData (fromIntegral $ k o) act t pk [toJSON fields, toJSON [o]]
-
-deleteData :: String -> String -> Int32 -> Maybe UpdateData
-deleteData tabName keyName oid = Just $ UpdateData
-    oid'
-    DELETE
-    tabName
-    keyName
-    [toJSON [keyName], toJSON [oid']]
-  where
-    oid' :: Integer
-    oid' = fromIntegral oid
-
-updateDataTable :: (Functor m, MonadIO m)
-    => Connection
-    -> [History]
-    -> TableContext
-    -> m [Maybe UpdateData]
-updateDataTable conn hs (T.TableContext rel k k' tab pk fields) = do
-    let (del1, oth) = partition ((==) DELETE . snd) hs
-    (del2, os) <- partition (isJust . snd) . classify k oth
-        <$> Query.runQuery conn (inIdList rel k' $ map fst oth) ()
-    let os' = os
-            ++ map (\d -> (d, Nothing)) del1
-            ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-    return $ map (toUpdateData k fields tab pk) os'
-
-updateData :: (MonadIO m, Functor m)
-    => Connection -> [TableContext] -> [History] -> m [Maybe UpdateData]
-updateData conn ts hs = mconcat <$> sequence (map (updateDataTable conn hs) ts)
+--updateData :: (MonadIO m, Functor m)
+--    => DataProvider
+--    -> Connection
+--    -> [TableContext]
+--    -> [History]
+--    -> m [Maybe [UpdateData]]
+--updateData dp conn ts hs =
+--    mconcat <$> sequence (map (updateDataTable dp conn hs) ts)
 
 version :: ActionM (VersionupHisIds, VersionupHisIds)
 version = do
@@ -184,14 +116,14 @@ addData :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a)
     => Connection
     -> Relation () a
     -> Pi a Int64
-    -> [TableContext]
     -> VersionupHisIds
     -> VersionupHisIds
+    -> ([History] -> [m [Maybe [UpdateData]]])
     -> StateT (Map String [Value]) m ()
-addData conn rel hid tables from to =
-    lift (targetHistories conn rel hid from to)
-    >>= updateData conn tables
-    >>= State.modify . f . toJSON
+addData conn relTable pk from to udata = do
+    hs <- lift $ targetHistories conn relTable pk from to
+    dat <- lift $ mconcat <$> sequence (udata hs)
+    State.modify $ f $ toJSON dat
   where
     f = f' DATA
     f' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
@@ -202,16 +134,16 @@ contents :: Auth -> ActionM ()
 contents _ = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $ do
-        addData conn OH.officeHistory OH.id'
-            Controller.Update.Office.updateData from to
-        addData conn KH.kyotakuHistory KH.id'
-            Controller.Update.Kyotaku.updateData from to
-        addData conn OAH.officeAdHistory OAH.id'
-            [Table.OfficePdf.tableContext] from to
-        addData conn OCH.officeCaseHistory OCH.id'
-            Controller.Update.OfficeCase.updateData from to
-        addData conn OSPH.officeSpPriceHistory OSPH.id'
-            [Table.OfficePdf.tableContext] from to
+        addData conn OH.officeHistory OH.id' from to $
+            Controller.Update.Office.updateData conn
+        addData conn KH.kyotakuHistory KH.id' from to $
+            Controller.Update.Kyotaku.updateData conn
+        addData conn OAH.officeAdHistory OAH.id' from to $ \hs ->
+            [updatedData Default conn hs Table.OfficePdf.tableContext]
+        addData conn OCH.officeCaseHistory OCH.id' from to $
+            Controller.Update.OfficeCase.updateData conn
+--        addData Default conn OSPH.officeSpPriceHistory OSPH.id'
+--            [Table.OfficePdf.tableContext] from to
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

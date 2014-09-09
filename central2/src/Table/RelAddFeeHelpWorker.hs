@@ -6,15 +6,15 @@ module Table.RelAddFeeHelpWorker where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_add_fee_help_worker"
 deriveJSON defaultOptions ''RelAddFeeHelpWorker
 mkFields ''RelAddFeeHelpWorker
 
-tableContext :: TableContext
+tableContext :: TableContext RelAddFeeHelpWorker
 tableContext = TableContext
     relAddFeeHelpWorker
     officeId

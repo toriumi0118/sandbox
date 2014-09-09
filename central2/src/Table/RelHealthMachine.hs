@@ -6,15 +6,15 @@ module Table.RelHealthMachine where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_health_machine"
 deriveJSON defaultOptions ''RelHealthMachine
 mkFields ''RelHealthMachine
 
-tableContext :: TableContext
+tableContext :: TableContext RelHealthMachine
 tableContext = TableContext
     relHealthMachine
     officeId

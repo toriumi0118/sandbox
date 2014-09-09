@@ -6,15 +6,15 @@ module Table.RelMealBuffet where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_meal_buffet"
 deriveJSON defaultOptions ''RelMealBuffet
 mkFields ''RelMealBuffet
 
-tableContext :: TableContext
+tableContext :: TableContext RelMealBuffet
 tableContext = TableContext
     relMealBuffet
     officeId

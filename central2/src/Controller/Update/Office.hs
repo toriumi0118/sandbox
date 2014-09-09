@@ -2,6 +2,7 @@ module Controller.Update.Office
     ( updateData
     ) where
 
+import Controller.Update.UpdateData (UpdatedDataList, DataProvider(Default), updatedData)
 import qualified Table.BusinessTime
 import qualified Table.DementiaBusinessTime
 import qualified Table.DementiaServiceTime
@@ -108,114 +109,113 @@ import qualified Table.RelWithBuilding
 import qualified Table.RelWithPet
 import qualified Table.ServiceTime
 import qualified Table.Vacancy
-import Table.Types (TableContext)
 
-updateData :: [TableContext]
-updateData =
-    [ Table.Office.tableContext
-    , Table.OfficePrice.tableContext
-    , Table.OfficeUserInfo.tableContext
-    , Table.OfficeLicence.tableContext
-    , Table.OfficeDementia.tableContext
-    , Table.OfficeContract.tableContext
-    , Table.RelSpecialField.tableContext
-    , Table.RelWithPet.tableContext
-    , Table.RelLandClass.tableContext
-    , Table.RelAddFee.tableContext
-    , Table.RelAddFeeWorker.tableContext
-    , Table.RelAddFeePrecaution.tableContext
-    , Table.RelAddFeeHelpWorker.tableContext
-    , Table.RelHelpLevel.tableContext
-    , Table.RelDementiaAddFee.tableContext
-    , Table.RelDementiaAddFeeWorker.tableContext
-    , Table.RelDementiaAddFeePrecaution.tableContext
-    , Table.RelDementiaAddFeeHelpWorker.tableContext
-    , Table.RelDementiaType.tableContext
-    , Table.RelDementiaHelpLevel.tableContext
-    , Table.RelDementiaJudge.tableContext
-    , Table.RelDementiaStudy.tableContext
-    , Table.RelDementiaFloor.tableContext
-    , Table.RelFloorCnt.tableContext
-    , Table.RelArchitecture.tableContext
-    , Table.RelElevator.tableContext
-    , Table.RelDesign.tableContext
-    , Table.RelRemodeling.tableContext
-    , Table.RelWheelchair.tableContext
-    , Table.RelSingleCare.tableContext
-    , Table.RelOralCare.tableContext
-    , Table.RelTerminalCare.tableContext
-    , Table.RelExtra.tableContext
-    , Table.RelNight.tableContext
-    , Table.RelDriveTime.tableContext
-    , Table.RelDriveRange.tableContext
-    , Table.RelAttendantBed.tableContext
-    , Table.RelCarLogo.tableContext
-    , Table.RelSelfOut.tableContext
-    , Table.RelInfoDiscovery.tableContext
-    , Table.RelDoseManage.tableContext
-    , Table.RelSocialAid.tableContext
-    , Table.RelPeeSameSex.tableContext
-    , Table.RelHiyari.tableContext
-    , Table.RelHotline.tableContext
-    , Table.RelVolunteer.tableContext
-    , Table.RelMassage.tableContext
-    , Table.RelMealStart.tableContext
-    , Table.RelMealMenu.tableContext
-    , Table.RelMealPlace.tableContext
-    , Table.RelMealDietician.tableContext
-    , Table.RelMealMadeIn.tableContext
-    , Table.RelMealDinner.tableContext
-    , Table.RelMealDrink.tableContext
-    , Table.RelMealBuffet.tableContext
-    , Table.RelMealOut.tableContext
-    , Table.RelMealKampo.tableContext
-    , Table.RelMealSnack.tableContext
-    , Table.RelBathSameSex.tableContext
-    , Table.RelBathJet.tableContext
-    , Table.RelNewspaper.tableContext
-    , Table.RelUserTablet.tableContext
-    , Table.RelBrainTraining.tableContext
-    , Table.RelBigTv.tableContext
-    , Table.RelBusinessKind.tableContext
-    , Table.RelExperiencePrice.tableContext
-    , Table.RelPet.tableContext
-    , Table.RelWithBuilding.tableContext
-    , Table.RelScale.tableContext
-    , Table.RelDementiaEndingCourse.tableContext
-    , Table.RelNurseCall.tableContext
-    , Table.RelFacility.tableContext
-    , Table.RelSuperPlayer.tableContext
-    , Table.RelMaleDay.tableContext
-    , Table.RelFemaleDay.tableContext
-    , Table.RelStayNight.tableContext
-    , Table.RelRecreation.tableContext
-    , Table.RelMedical.tableContext
-    , Table.RelMedicalDay.tableContext
-    , Table.RelLocalCommunication.tableContext
-    , Table.RelOrientalMedicine.tableContext
-    , Table.RelBathMachine.tableContext
-    , Table.RelBathType.tableContext
-    , Table.RelBathWay.tableContext
-    , Table.RelBathOnsen.tableContext
-    , Table.RelBathTime.tableContext
-    , Table.RelHealthMachine.tableContext
-    , Table.RelRehabMachine.tableContext
-    , Table.RelMidnightMeal.tableContext
-    , Table.RelSpeechTherapist.tableContext
-    , Table.RelAcupressureTherapist.tableContext
-    , Table.BusinessTime.tableContext
-    , Table.DementiaBusinessTime.tableContext
-    , Table.Vacancy.tableContext
-    , Table.DementiaVacancy.tableContext
-    , Table.ServiceTime.tableContext
-    , Table.DementiaServiceTime.tableContext
-    , Table.RelViolence.tableContext
-    , Table.RelFingerTranslator.tableContext
-    , Table.OfficeImageCom.tableContext
-    , Table.OfficeAppealPoint.tableContext
-    , Table.RelMealBreakfast.tableContext
-    , Table.RelBathMicroBubble.tableContext
-    , Table.RelAlcohol.tableContext
-    , Table.RelSmoking.tableContext
-    , Table.RelMealLaunch.tableContext
+updateData :: UpdatedDataList
+updateData conn hs =
+    [ updatedData Default conn hs Table.Office.tableContext
+    , updatedData Default conn hs Table.OfficePrice.tableContext
+    , updatedData Default conn hs Table.OfficeUserInfo.tableContext
+    , updatedData Default conn hs Table.OfficeLicence.tableContext
+    , updatedData Default conn hs Table.OfficeDementia.tableContext
+    , updatedData Default conn hs Table.OfficeContract.tableContext
+    , updatedData Default conn hs Table.RelSpecialField.tableContext
+    , updatedData Default conn hs Table.RelWithPet.tableContext
+    , updatedData Default conn hs Table.RelLandClass.tableContext
+    , updatedData Default conn hs Table.RelAddFee.tableContext
+    , updatedData Default conn hs Table.RelAddFeeWorker.tableContext
+    , updatedData Default conn hs Table.RelAddFeePrecaution.tableContext
+    , updatedData Default conn hs Table.RelAddFeeHelpWorker.tableContext
+    , updatedData Default conn hs Table.RelHelpLevel.tableContext
+    , updatedData Default conn hs Table.RelDementiaAddFee.tableContext
+    , updatedData Default conn hs Table.RelDementiaAddFeeWorker.tableContext
+    , updatedData Default conn hs Table.RelDementiaAddFeePrecaution.tableContext
+    , updatedData Default conn hs Table.RelDementiaAddFeeHelpWorker.tableContext
+    , updatedData Default conn hs Table.RelDementiaType.tableContext
+    , updatedData Default conn hs Table.RelDementiaHelpLevel.tableContext
+    , updatedData Default conn hs Table.RelDementiaJudge.tableContext
+    , updatedData Default conn hs Table.RelDementiaStudy.tableContext
+    , updatedData Default conn hs Table.RelDementiaFloor.tableContext
+    , updatedData Default conn hs Table.RelFloorCnt.tableContext
+    , updatedData Default conn hs Table.RelArchitecture.tableContext
+    , updatedData Default conn hs Table.RelElevator.tableContext
+    , updatedData Default conn hs Table.RelDesign.tableContext
+    , updatedData Default conn hs Table.RelRemodeling.tableContext
+    , updatedData Default conn hs Table.RelWheelchair.tableContext
+    , updatedData Default conn hs Table.RelSingleCare.tableContext
+    , updatedData Default conn hs Table.RelOralCare.tableContext
+    , updatedData Default conn hs Table.RelTerminalCare.tableContext
+    , updatedData Default conn hs Table.RelExtra.tableContext
+    , updatedData Default conn hs Table.RelNight.tableContext
+    , updatedData Default conn hs Table.RelDriveTime.tableContext
+    , updatedData Default conn hs Table.RelDriveRange.tableContext
+    , updatedData Default conn hs Table.RelAttendantBed.tableContext
+    , updatedData Default conn hs Table.RelCarLogo.tableContext
+    , updatedData Default conn hs Table.RelSelfOut.tableContext
+    , updatedData Default conn hs Table.RelInfoDiscovery.tableContext
+    , updatedData Default conn hs Table.RelDoseManage.tableContext
+    , updatedData Default conn hs Table.RelSocialAid.tableContext
+    , updatedData Default conn hs Table.RelPeeSameSex.tableContext
+    , updatedData Default conn hs Table.RelHiyari.tableContext
+    , updatedData Default conn hs Table.RelHotline.tableContext
+    , updatedData Default conn hs Table.RelVolunteer.tableContext
+    , updatedData Default conn hs Table.RelMassage.tableContext
+    , updatedData Default conn hs Table.RelMealStart.tableContext
+    , updatedData Default conn hs Table.RelMealMenu.tableContext
+    , updatedData Default conn hs Table.RelMealPlace.tableContext
+    , updatedData Default conn hs Table.RelMealDietician.tableContext
+    , updatedData Default conn hs Table.RelMealMadeIn.tableContext
+    , updatedData Default conn hs Table.RelMealDinner.tableContext
+    , updatedData Default conn hs Table.RelMealDrink.tableContext
+    , updatedData Default conn hs Table.RelMealBuffet.tableContext
+    , updatedData Default conn hs Table.RelMealOut.tableContext
+    , updatedData Default conn hs Table.RelMealKampo.tableContext
+    , updatedData Default conn hs Table.RelMealSnack.tableContext
+    , updatedData Default conn hs Table.RelBathSameSex.tableContext
+    , updatedData Default conn hs Table.RelBathJet.tableContext
+    , updatedData Default conn hs Table.RelNewspaper.tableContext
+    , updatedData Default conn hs Table.RelUserTablet.tableContext
+    , updatedData Default conn hs Table.RelBrainTraining.tableContext
+    , updatedData Default conn hs Table.RelBigTv.tableContext
+    , updatedData Default conn hs Table.RelBusinessKind.tableContext
+    , updatedData Default conn hs Table.RelExperiencePrice.tableContext
+    , updatedData Default conn hs Table.RelPet.tableContext
+    , updatedData Default conn hs Table.RelWithBuilding.tableContext
+    , updatedData Default conn hs Table.RelScale.tableContext
+    , updatedData Default conn hs Table.RelDementiaEndingCourse.tableContext
+    , updatedData Default conn hs Table.RelNurseCall.tableContext
+    , updatedData Default conn hs Table.RelFacility.tableContext
+    , updatedData Default conn hs Table.RelSuperPlayer.tableContext
+    , updatedData Default conn hs Table.RelMaleDay.tableContext
+    , updatedData Default conn hs Table.RelFemaleDay.tableContext
+    , updatedData Default conn hs Table.RelStayNight.tableContext
+    , updatedData Default conn hs Table.RelRecreation.tableContext
+    , updatedData Default conn hs Table.RelMedical.tableContext
+    , updatedData Default conn hs Table.RelMedicalDay.tableContext
+    , updatedData Default conn hs Table.RelLocalCommunication.tableContext
+    , updatedData Default conn hs Table.RelOrientalMedicine.tableContext
+    , updatedData Default conn hs Table.RelBathMachine.tableContext
+    , updatedData Default conn hs Table.RelBathType.tableContext
+    , updatedData Default conn hs Table.RelBathWay.tableContext
+    , updatedData Default conn hs Table.RelBathOnsen.tableContext
+    , updatedData Default conn hs Table.RelBathTime.tableContext
+    , updatedData Default conn hs Table.RelHealthMachine.tableContext
+    , updatedData Default conn hs Table.RelRehabMachine.tableContext
+    , updatedData Default conn hs Table.RelMidnightMeal.tableContext
+    , updatedData Default conn hs Table.RelSpeechTherapist.tableContext
+    , updatedData Default conn hs Table.RelAcupressureTherapist.tableContext
+    , updatedData Default conn hs Table.BusinessTime.tableContext
+    , updatedData Default conn hs Table.DementiaBusinessTime.tableContext
+    , updatedData Default conn hs Table.Vacancy.tableContext
+    , updatedData Default conn hs Table.DementiaVacancy.tableContext
+    , updatedData Default conn hs Table.ServiceTime.tableContext
+    , updatedData Default conn hs Table.DementiaServiceTime.tableContext
+    , updatedData Default conn hs Table.RelViolence.tableContext
+    , updatedData Default conn hs Table.RelFingerTranslator.tableContext
+    , updatedData Default conn hs Table.OfficeImageCom.tableContext
+    , updatedData Default conn hs Table.OfficeAppealPoint.tableContext
+    , updatedData Default conn hs Table.RelMealBreakfast.tableContext
+    , updatedData Default conn hs Table.RelBathMicroBubble.tableContext
+    , updatedData Default conn hs Table.RelAlcohol.tableContext
+    , updatedData Default conn hs Table.RelSmoking.tableContext
+    , updatedData Default conn hs Table.RelMealLaunch.tableContext
     ]

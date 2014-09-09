@@ -6,15 +6,15 @@ module Table.RelOrientalMedicine where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_oriental_medicine"
 deriveJSON defaultOptions ''RelOrientalMedicine
 mkFields ''RelOrientalMedicine
 
-tableContext :: TableContext
+tableContext :: TableContext RelOrientalMedicine
 tableContext = TableContext
     relOrientalMedicine
     officeId

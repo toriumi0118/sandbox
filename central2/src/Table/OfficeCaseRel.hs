@@ -7,15 +7,15 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "office_case_rel"
 deriveJSON defaultOptions ''OfficeCaseRel
 mkFields ''OfficeCaseRel
 
-tableContext :: TableContext
+tableContext :: TableContext OfficeCaseRel
 tableContext = TableContext
     officeCaseRel
     (fromIntegral . officePdfId)

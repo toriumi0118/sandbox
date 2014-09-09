@@ -6,15 +6,15 @@ module Table.RelWheelchair where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_wheelchair"
 deriveJSON defaultOptions ''RelWheelchair
 mkFields ''RelWheelchair
 
-tableContext :: TableContext
+tableContext :: TableContext RelWheelchair
 tableContext = TableContext
     relWheelchair
     officeId

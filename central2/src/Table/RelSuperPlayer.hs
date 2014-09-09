@@ -6,15 +6,15 @@ module Table.RelSuperPlayer where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_super_player"
 deriveJSON defaultOptions ''RelSuperPlayer
 mkFields ''RelSuperPlayer
 
-tableContext :: TableContext
+tableContext :: TableContext RelSuperPlayer
 tableContext = TableContext
     relSuperPlayer
     officeId

@@ -8,15 +8,15 @@ import Database.Relational.Query ((|$|))
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "office_pdf"
 deriveJSON defaultOptions ''OfficePdf
 mkFields ''OfficePdf
 
-tableContext :: TableContext
+tableContext :: TableContext OfficePdf
 tableContext = TableContext
     officePdf
     (fromIntegral . id)

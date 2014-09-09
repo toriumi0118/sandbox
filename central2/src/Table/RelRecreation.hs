@@ -6,15 +6,15 @@ module Table.RelRecreation where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_recreation"
 deriveJSON defaultOptions ''RelRecreation
 mkFields ''RelRecreation
 
-tableContext :: TableContext
+tableContext :: TableContext RelRecreation
 tableContext = TableContext
     relRecreation
     officeId

@@ -70,15 +70,15 @@ module Table.${moduleName} where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "${tableName}"
 deriveJSON defaultOptions ''${moduleName}
 mkFields ''${moduleName}
 
-tableContext :: TableContext
+tableContext :: TableContext ${moduleName}
 tableContext = TableContext
     ${relName}
     ${relKeyName}

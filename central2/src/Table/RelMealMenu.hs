@@ -6,15 +6,15 @@ module Table.RelMealMenu where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_meal_menu"
 deriveJSON defaultOptions ''RelMealMenu
 mkFields ''RelMealMenu
 
-tableContext :: TableContext
+tableContext :: TableContext RelMealMenu
 tableContext = TableContext
     relMealMenu
     officeId

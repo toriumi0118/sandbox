@@ -6,15 +6,15 @@ module Table.OfficeDementia where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "office_dementia"
 deriveJSON defaultOptions ''OfficeDementia
 mkFields ''OfficeDementia
 
-tableContext :: TableContext
+tableContext :: TableContext OfficeDementia
 tableContext = TableContext
     officeDementia
     officeId

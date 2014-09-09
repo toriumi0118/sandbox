@@ -6,15 +6,15 @@ module Table.RelPet where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_pet"
 deriveJSON defaultOptions ''RelPet
 mkFields ''RelPet
 
-tableContext :: TableContext
+tableContext :: TableContext RelPet
 tableContext = TableContext
     relPet
     officeId

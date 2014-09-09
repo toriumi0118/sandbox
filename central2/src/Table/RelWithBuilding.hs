@@ -6,15 +6,15 @@ module Table.RelWithBuilding where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_with_building"
 deriveJSON defaultOptions ''RelWithBuilding
 mkFields ''RelWithBuilding
 
-tableContext :: TableContext
+tableContext :: TableContext RelWithBuilding
 tableContext = TableContext
     relWithBuilding
     officeId

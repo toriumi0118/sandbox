@@ -6,15 +6,15 @@ module Table.RelBrainTraining where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_brain_training"
 deriveJSON defaultOptions ''RelBrainTraining
 mkFields ''RelBrainTraining
 
-tableContext :: TableContext
+tableContext :: TableContext RelBrainTraining
 tableContext = TableContext
     relBrainTraining
     officeId

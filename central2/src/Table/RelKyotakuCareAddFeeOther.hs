@@ -6,15 +6,15 @@ module Table.RelKyotakuCareAddFeeOther where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
+import Controller.Update.UpdateData (TableContext(TableContext))
 import DataSource (defineTable)
-import Table.Types (TableContext(TableContext))
 import TH (mkFields)
 
 defineTable "rel_kyotaku_care_add_fee_other"
 deriveJSON defaultOptions ''RelKyotakuCareAddFeeOther
 mkFields ''RelKyotakuCareAddFeeOther
 
-tableContext :: TableContext
+tableContext :: TableContext RelKyotakuCareAddFeeOther
 tableContext = TableContext
     relKyotakuCareAddFeeOther
     officeId

@@ -43,8 +43,7 @@ import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficePdf
---import qualified Table.OfficeSpPriceHistory as OSPH
---import Table.Types (TableName, PkColumn, Fields, TableContext)
+import qualified Table.OfficeSpPriceHistory as OSPH
 import Util (clientError)
 
 data UpdateResponseKey
@@ -142,8 +141,8 @@ contents _ = do
             [updatedData Default conn hs Table.OfficePdf.tableContext]
         addData conn OCH.officeCaseHistory OCH.id' from to $
             Controller.Update.OfficeCase.updateData conn
---        addData Default conn OSPH.officeSpPriceHistory OSPH.id'
---            [Table.OfficePdf.tableContext] from to
+        addData conn OSPH.officeSpPriceHistory OSPH.id' from to $ \hs ->
+            [updatedData NewsData conn hs Table.OfficePdf.tableContext]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

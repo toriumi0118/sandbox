@@ -32,7 +32,7 @@ import Auth (Auth)
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import qualified Controller.Types.VersionupHisIds as V
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
@@ -82,14 +82,13 @@ history historyRelation k = relation' $ do
 --   office_id,actionの組のリストを取得
 targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a, C.History a)
     => Connection
-    -> Relation () a -- ^ テーブルSQL
-    -> Pi a Int64 -- ^ from, toのキー
-    -> (VersionupHisIds -> Integer) -- ^ from, toのレコードのラベル
+    -> HistoryContext a
     -> VersionupHisIds -- ^ from
     -> VersionupHisIds -- ^ to
     -> m [History]
-targetHistories conn r k' idk from to = uniq . map (second read) <$>
-    Query.runQuery conn (history r k') (curry (bimap oid oid) from to)
+targetHistories conn (HistoryContext r k' idk) from to =
+    uniq . map (second read) <$>
+        Query.runQuery conn (history r k') (curry (bimap oid oid) from to)
   where
     oid = fromIntegral . idk
     uniq = Map.elems . flip State.execState Map.empty . uniq'
@@ -106,17 +105,15 @@ version = do
 
 addData :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a)
     => Connection
-    -> Relation () a
-    -> Pi a Int64
-    -> (VersionupHisIds -> Integer) -- ^ from, toのレコードのラベル
+    -> HistoryContext a
     -> VersionupHisIds
     -> VersionupHisIds
     -> ([History] -> [m [Maybe [UpdateData]]])
     -> StateT (Map String [Value]) m ()
-addData conn relTable pk idk from to udata = do
-    hs <- lift $ targetHistories conn relTable pk idk from to
-    dat <- lift $ mconcat <$> sequence (udata hs)
-    State.modify $ f $ toJSON dat
+addData conn ctx from to udata = do
+    hs <- lift $ targetHistories conn ctx from to
+    lift (mconcat <$> sequence (udata hs))
+        >>= State.modify . f . toJSON
   where
     f = f' DATA
     f' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
@@ -127,16 +124,16 @@ contents :: Auth -> ActionM ()
 contents _ = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $ do
-        addData conn OH.officeHistory OH.id' V.officeId from to $
+        addData conn OH.historyContext from to $
             Controller.Update.Office.updateData conn
-        addData conn KH.kyotakuHistory KH.id' V.kyotakuId from to $
+        addData conn KH.historyContext from to $
             Controller.Update.Kyotaku.updateData conn
-        addData conn OAH.officeAdHistory OAH.id' V.officeAdId from to $ \hs ->
+        addData conn OAH.historyContext from to $ \hs ->
             [updatedData Default conn hs Table.OfficePdf.tableContext]
-        addData conn OCH.officeCaseHistory OCH.id' V.officeCaseId from to $
+        addData conn OCH.historyContext from to $
             Controller.Update.OfficeCase.updateData conn
-        addData conn OSPH.officeSpPriceHistory OSPH.id' V.newsHeadId from to $ \hs ->
-            [updatedData NewsData conn hs Table.OfficePdf.tableContext]
+        addData conn OSPH.historyContext from to $ \hs ->
+            [updatedData Default conn hs Table.OfficePdf.tableContext]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

@@ -8,7 +8,7 @@ import Database.Relational.Query ((|$|))
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
-import Controller.Update.UpdateData (TableContext(TableContext))
+import Controller.Update.TableContext (TableContext(TableContext))
 import DataSource (defineTable)
 import TH (mkFields)
 

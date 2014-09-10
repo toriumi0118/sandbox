@@ -6,6 +6,7 @@ module Util
     , clientError
     , unique
     , initIf
+    , cm
     ) where
 
 import Control.Exception (SomeException, catch)
@@ -32,3 +33,9 @@ initIf f [a]
     | f a         = []
     | otherwise   = [a]
 initIf _ as@(_:_) = as
+
+cm :: Maybe a -> [a] -> [a]
+cm Nothing  xs = xs
+cm (Just x) xs = x:xs
+
+infixr 7 `cm`

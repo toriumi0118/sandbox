@@ -11,25 +11,15 @@ import Data.Int (Int32)
 import Data.List (partition)
 import Data.Maybe (isJust)
 import Database.HDBC (SqlValue)
-import Database.Record (FromSql)
+import Database.Record (FromSql, PersistableWidth)
 import Database.Relational.Query
 
+import Controller.Update.TableContext (TableContext(..), TableName, PkColumn)
 import DataSource (Connection)
 import qualified Query
-import Util (initIf)
-
-type TableName = String
-type PkColumn = String
-type Fields = [String]
-
-data TableContext a = TableContext
-    { tableRel :: Relation () a
-    , officeId :: (a -> Int32)
-    , officeId' :: Pi a Int32
-    , tableName :: TableName
-    , pkName :: PkColumn
-    , fields :: Fields
-    }
+import qualified Table.NewsBody as NB
+import qualified Table.NewsOfficeRel as NOR
+import Util (initIf, cm)
 
 data FileAction = INSERT | DELETE | UPDATE
   deriving (Show, Read, Eq)
@@ -69,24 +59,40 @@ classify k (h:hs) (o:os)
     | fst h == k o       = (h, Just o):classify k hs os
     | otherwise          = (h, Nothing):classify k hs (o:os)
 
-deleteData :: MonadIO m
+byKey :: PersistableWidth k => Relation () a -> Pi a k -> Relation k a
+byKey rel k = relation' $ do
+    a <- query rel
+    (ph, ()) <- placeholder $ \k' -> wheres $
+        a ! k .=. k'
+    return (ph, a)
+
+deleteData :: (MonadIO m, Functor m)
     => DataProvider
     -> Connection
     -> TableContext a
     -> Int32 -- ^ office id
     -> m (Maybe [UpdateData])
-deleteData NewsData _ _ _ = undefined
-deleteData Default _ (TableContext _ _ _ tabName keyName _) oid = return $ Just $ (:[]) $ UpdateData
-    oid'
-    DELETE
-    tabName
-    keyName
-    [toJSON [keyName], toJSON [oid']]
+deleteData NewsData conn ctx@(TableContext _ _ _ tabName keyName _) oid = do
+    (Just ds) <- deleteData Default conn ctx oid
+    r1 <- f <$> Query.runQuery conn (byKey NB.newsBody NB.id') (fromIntegral oid)
+    r2 <- f <$> Query.runQuery conn (byKey NOR.newsOfficeRel NOR.newsHeadId') (fromIntegral oid)
+    return $ Just $ r2 `cm` r1 `cm` ds
+  where
+    f (a:_) = Just $
+        UpdateData (fromIntegral oid) DELETE tabName keyName [toJSON a]
+    f []    = Nothing
+deleteData Default _ (TableContext _ _ _ tabName keyName _) oid =
+    return $ Just $ (:[]) $ UpdateData
+        oid'
+        DELETE
+        tabName
+        keyName
+        [toJSON [keyName], toJSON [oid']]
   where
     oid' :: Integer
     oid' = fromIntegral oid
 
-toUpdateData :: (MonadIO m, ToJSON a)
+toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     => DataProvider
     -> Connection
     -> TableContext a
@@ -112,8 +118,11 @@ updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
 updatedData dp conn hs ctx@(TableContext rel k k' _ _ _) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
     (del2, os) <- partition (isJust . snd) . classify k oth
-        <$> Query.runQuery conn (inIdList rel k' $ map fst oth) ()
+        <$> Query.runQuery conn (historyData dp $ map fst oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
     mapM (toUpdateData dp conn ctx) os'
+  where
+    historyData Default  = inIdList rel k'
+    historyData NewsData = undefined

@@ -31,11 +31,12 @@ import Web.Scotty.Binding.Play (parseParams)
 import Auth (Auth)
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
-import Controller.Types.VersionupHisIds (VersionupHisIds(officeId))
+import Controller.Types.VersionupHisIds (VersionupHisIds)
+import qualified Controller.Types.VersionupHisIds as V
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
-import Controller.Update.UpdateData hiding (officeId)
+import Controller.Update.UpdateData (updatedData, History, DataProvider(..), UpdateData)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
@@ -83,25 +84,17 @@ targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a, C.History a)
     => Connection
     -> Relation () a -- ^ テーブルSQL
     -> Pi a Int64 -- ^ from, toのキー
+    -> (VersionupHisIds -> Integer) -- ^ from, toのレコードのラベル
     -> VersionupHisIds -- ^ from
     -> VersionupHisIds -- ^ to
     -> m [History]
-targetHistories conn r k from to = uniq . map (second read) <$>
-    Query.runQuery conn (history r k) (curry (bimap oid oid) from to)
+targetHistories conn r k' idk from to = uniq . map (second read) <$>
+    Query.runQuery conn (history r k') (curry (bimap oid oid) from to)
   where
-    oid = fromIntegral . officeId
+    oid = fromIntegral . idk
     uniq = Map.elems . flip State.execState Map.empty . uniq'
     uniq' []            = return ()
     uniq' (h@(i, _):hs) = State.modify (Map.insert i h) >> uniq' hs
-
---updateData :: (MonadIO m, Functor m)
---    => DataProvider
---    -> Connection
---    -> [TableContext]
---    -> [History]
---    -> m [Maybe [UpdateData]]
---updateData dp conn ts hs =
---    mconcat <$> sequence (map (updateDataTable dp conn hs) ts)
 
 version :: ActionM (VersionupHisIds, VersionupHisIds)
 version = do
@@ -115,12 +108,13 @@ addData :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a)
     => Connection
     -> Relation () a
     -> Pi a Int64
+    -> (VersionupHisIds -> Integer) -- ^ from, toのレコードのラベル
     -> VersionupHisIds
     -> VersionupHisIds
     -> ([History] -> [m [Maybe [UpdateData]]])
     -> StateT (Map String [Value]) m ()
-addData conn relTable pk from to udata = do
-    hs <- lift $ targetHistories conn relTable pk from to
+addData conn relTable pk idk from to udata = do
+    hs <- lift $ targetHistories conn relTable pk idk from to
     dat <- lift $ mconcat <$> sequence (udata hs)
     State.modify $ f $ toJSON dat
   where
@@ -133,15 +127,15 @@ contents :: Auth -> ActionM ()
 contents _ = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $ do
-        addData conn OH.officeHistory OH.id' from to $
+        addData conn OH.officeHistory OH.id' V.officeId from to $
             Controller.Update.Office.updateData conn
-        addData conn KH.kyotakuHistory KH.id' from to $
+        addData conn KH.kyotakuHistory KH.id' V.kyotakuId from to $
             Controller.Update.Kyotaku.updateData conn
-        addData conn OAH.officeAdHistory OAH.id' from to $ \hs ->
+        addData conn OAH.officeAdHistory OAH.id' V.officeAdId from to $ \hs ->
             [updatedData Default conn hs Table.OfficePdf.tableContext]
-        addData conn OCH.officeCaseHistory OCH.id' from to $
+        addData conn OCH.officeCaseHistory OCH.id' V.officeCaseId from to $
             Controller.Update.OfficeCase.updateData conn
-        addData conn OSPH.officeSpPriceHistory OSPH.id' from to $ \hs ->
+        addData conn OSPH.officeSpPriceHistory OSPH.id' V.newsHeadId from to $ \hs ->
             [updatedData NewsData conn hs Table.OfficePdf.tableContext]
         error "tmp"
       ) >>= Scotty.json

@@ -47,6 +47,8 @@ import qualified Table.OfficePdf
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.NewsHistory as NH
 import qualified Table.NewsHead
+import qualified Table.TopicHistory as TH
+import qualified Table.Topic
 import Util (clientError)
 
 data UpdateResponseKey
@@ -138,6 +140,8 @@ contents _ = do
             [updatedData Default conn hs Table.OfficePdf.tableContext]
         addData conn NH.historyContext from to $ \hs ->
             [updatedData NewsData conn hs Table.NewsHead.tableContext]
+        addData conn TH.historyContext from to $ \hs ->
+            [updatedData Default conn hs Table.Topic.tableContext]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

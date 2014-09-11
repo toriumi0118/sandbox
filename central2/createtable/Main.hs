@@ -3,6 +3,8 @@
 module Main where
 
 import Data.Char (toUpper, toLower)
+import Data.List (intercalate)
+import Data.Maybe (catMaybes)
 import Data.String.Here (i)
 import Prelude hiding (mod)
 import System.Environment (getArgs)
@@ -22,11 +24,11 @@ data TableType = Standard | Versionup String
 
 createTable :: [String] -> TableType -> IO ()
 createTable tableNames typ = do
-    let names = zip tableNames $ map toModuleName tableNames
     flip mapM_ names $ \(tab, mod) ->
         withFile (fileName mod) WriteMode $ \h ->
             hPutStr h $ content typ tab mod
   where
+    names = zip tableNames $ map toModuleName tableNames
     fileName moduleName = "src/Table/" ++ moduleName ++ ".hs"
 
 split :: Eq a => a -> [a] -> [[a]]
@@ -48,41 +50,48 @@ headLower :: String -> String
 headLower []     = []
 headLower (c:cs) = toLower c:cs
 
-content :: TableType -> String -> String -> String
-content Standard tableName moduleName = [i|
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+extensions :: [String] -> String
+extensions es = [i|{-# LANGUAGE ${v} #-}|]
+  where
+    v = intercalate ", " es
+
+template :: String -> String -> String -> String -> String -> String
+template tableName moduleName exts exmods inmods = [i|${exts}
 
 module Table.${moduleName} where
 
-import Data.Aeson.TH (deriveJSON, defaultOptions)
+${exmods}
 
-import DataSource (defineTable)
+${inmods}
 
 defineTable "${tableName}"
-
 deriveJSON defaultOptions ''${moduleName}
 |]
-content (Versionup keyName) tableName moduleName = [i|
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.${moduleName} where
-
-import Data.Aeson.TH (deriveJSON, defaultOptions)
-
-import Controller.Types.Class ()
-import Controller.Update.TableContext (TableContext(TableContext))
-import DataSource (defineTable)
-import TH (mkFields)
-
-defineTable "${tableName}"
-deriveJSON defaultOptions ''${moduleName}
-mkFields ''${moduleName}
+content :: TableType -> String -> String -> String
+content Standard tableName moduleName =
+    template tableName moduleName exts exmods inmods
+  where
+    exts = extensions
+        [ "TemplateHaskell"
+        , "MultiParamTypeClasses"
+        , "FlexibleInstances"
+        ]
+    exmods = intercalate "\n"
+        [ "import Data.Aeson.TH (deriveJSON, defaultOptions)"
+        ]
+    inmods = intercalate "\n"
+        [ "import DataSource (defineTable)"
+        ]
+content (Versionup keyName) tableName moduleName =
+    template tableName moduleName exts exmods inmods
+    ++ [i|mkFields ''${moduleName}
 
 tableContext :: TableContext ${moduleName}
 tableContext = TableContext
     ${relName}
     ${relKeyName}
-    ${relKeyName}'
+    ${relKeyName'}
     "${tableName}"
     "${keyName}"
     fields
@@ -90,4 +99,37 @@ tableContext = TableContext
 |]
   where
     relName = headLower moduleName
-    relKeyName = headLower $ toModuleName keyName
+    relKeyBase = headLower $ toModuleName keyName
+    relKeyName = if moduleName `elem` intList
+        then [i|(fromIntegral . ${relKeyBase})|]
+        else relKeyBase
+    relKeyName' = if moduleName `elem` intList
+        then "(fromIntegral |$| " ++ relKeyBase ++ "')"
+        else relKeyBase ++ "'"
+    exts = extensions
+        [ "TemplateHaskell"
+        , "MultiParamTypeClasses"
+        , "FlexibleInstances"
+        ]
+    exmods = intercalate "\n" $ catMaybes $
+        Just "import Data.Aeson.TH (deriveJSON, defaultOptions)"
+        :(if moduleName `elem` intList
+            then Just "import Database.Relational.Query ((|$|))"
+            else Nothing)
+        :(if relKeyBase == "id"
+            then Just "import Prelude hiding (id)"
+            else Nothing)
+        :[]
+    inmods = intercalate "\n"
+        [ "import Controller.Types.Class ()"
+        , "import Controller.Update.TableContext (TableContext(TableContext))"
+        , "import DataSource (defineTable)"
+        , "import TH (mkFields)"
+        ]
+
+intList :: [String]
+intList =
+    [ "OfficeCaseRel"
+    , "OfficeImageCom"
+    , "OfficePdf"
+    ]

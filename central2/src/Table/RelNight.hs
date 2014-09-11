@@ -1,4 +1,3 @@
-
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
 module Table.RelNight where

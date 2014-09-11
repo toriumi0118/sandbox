@@ -22,3 +22,4 @@ tableContext = TableContext
     "rel_dementia_ending_course"
     "office_id"
     fields
+    Nothing

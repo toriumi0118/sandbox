@@ -86,6 +86,7 @@ tableContext = TableContext
     "${tableName}"
     "${keyName}"
     fields
+    Nothing
 |]
   where
     relName = headLower moduleName

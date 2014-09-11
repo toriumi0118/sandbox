@@ -22,3 +22,4 @@ tableContext = TableContext
     "rel_kyotaku_service_area"
     "office_id"
     fields
+    Nothing

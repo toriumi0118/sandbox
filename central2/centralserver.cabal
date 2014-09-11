@@ -30,6 +30,7 @@ executable centralserver
                      , lens
                      , mtl
                      , names-th
+                     , old-locale
                      , persistable-record
                      , relational-mysql
                      , relational-query
@@ -41,7 +42,7 @@ executable centralserver
                      , sql-words
                      , template-haskell
                      , text
-                     , time
+                     , time < 1.5
                      , transformers
                      , unix-time
                      , wai-extra

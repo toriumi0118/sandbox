@@ -9,6 +9,7 @@ import Prelude hiding (id)
 import Controller.Types.Class ()
 import Controller.Update.TableContext (TableContext(TableContext))
 import DataSource (defineTable)
+import qualified Query
 import TH (mkFields)
 
 defineTable "news_head"
@@ -23,3 +24,4 @@ tableContext = TableContext
     "news_head"
     "id"
     fields
+    (Just $ Query.between newsHead dateYmd')

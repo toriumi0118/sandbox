@@ -22,3 +22,4 @@ tableContext = TableContext
     "rel_stay_night"
     "office_id"
     fields
+    Nothing

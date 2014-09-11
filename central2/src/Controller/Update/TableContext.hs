@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 module Controller.Update.TableContext
     ( TableName, PkColumn, Fields
     , TableContext (..)
@@ -17,4 +19,5 @@ data TableContext a = TableContext
     , tableName :: TableName
     , pkName :: PkColumn
     , fields :: Fields
+    , params :: Maybe (Relation (Maybe Int32, Maybe Int32) a)
     }

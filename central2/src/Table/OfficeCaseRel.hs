@@ -6,7 +6,7 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
-import Controller.Update.TableContext (TableContext(TableContext))
+import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
@@ -22,4 +22,4 @@ tableContext = TableContext
     "office_case_rel"
     "office_pdf_id"
     fields
-    Nothing
+    NoParam

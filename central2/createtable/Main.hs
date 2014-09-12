@@ -95,7 +95,7 @@ tableContext = TableContext
     "${tableName}"
     "${keyName}"
     fields
-    Nothing
+    NoParam
 |]
   where
     relName = headLower moduleName
@@ -122,7 +122,7 @@ tableContext = TableContext
         :[]
     inmods = intercalate "\n"
         [ "import Controller.Types.Class ()"
-        , "import Controller.Update.TableContext (TableContext(TableContext))"
+        , "import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))"
         , "import DataSource (defineTable)"
         , "import TH (mkFields)"
         ]

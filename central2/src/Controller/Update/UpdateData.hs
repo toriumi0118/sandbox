@@ -15,11 +15,10 @@ import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import System.Locale (defaultTimeLocale)
 
-import Controller.Update.TableContext (TableContext(..), TableName, PkColumn)
+import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(..))
 import DataSource (Connection)
 import qualified Query
 import qualified Table.NewsBody as NB
-import qualified Table.NewsHead as NH
 import qualified Table.NewsOfficeRel as NOR
 import Util (initIf, cm)
 
@@ -38,9 +37,9 @@ data UpdateData = UpdateData
 
 type History = (Int32, FileAction)
 
-data DataProvider = NewsData | Default
-
 deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
+
+data DataProvider = Default | NewsData
 
 type UpdatedDataList = forall m. (MonadIO m, Functor m)
     => Connection -> [History] -> [m [Maybe [UpdateData]]]
@@ -106,9 +105,10 @@ updatedData dp conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
     (del2, os) <- partition (isJust . snd) . classify k oth
         <$> case mp of
-            Nothing -> Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
-            Just p' -> liftIO param >>=
+            NewsParam p' -> liftIO param >>=
                 Query.runQuery conn (Query.inList p' k' $ map fst oth)
+            _            ->
+                Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2

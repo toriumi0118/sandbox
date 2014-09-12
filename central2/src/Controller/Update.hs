@@ -28,7 +28,7 @@ import qualified Web.Scotty as Scotty
 import qualified Web.Scotty.Internal.Types as Scotty
 import Web.Scotty.Binding.Play (parseParams)
 
-import Auth (Auth)
+import Auth (Auth(Auth))
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
@@ -125,7 +125,7 @@ addData conn ctx from to udata = do
         k' = show k
 
 contents :: Auth -> ActionM ()
-contents _ = do
+contents (Auth deviceId) = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $ do
         addData conn OH.historyContext from to $
@@ -141,9 +141,12 @@ contents _ = do
         addData conn NH.historyContext from to $ \hs ->
             [updatedData NewsData conn hs Table.NewsHead.tableContext]
         addData conn TH.historyContext from to $ \hs ->
-            [updatedData Default conn hs Table.Topic.tableContext]
+            [updatedData Default conn hs $
+                Table.Topic.tableContext isWelmo]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do
     liftIO $ print $ Scotty.showError e
     clientError
+  where
+    isWelmo = deviceId == -1

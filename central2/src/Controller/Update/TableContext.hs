@@ -3,6 +3,7 @@
 module Controller.Update.TableContext
     ( TableName, PkColumn, Fields
     , TableContext (..)
+    , TableContextParam (..)
     ) where
 
 import Data.Int (Int32)
@@ -12,6 +13,11 @@ type TableName = String
 type PkColumn = String
 type Fields = [String]
 
+data TableContextParam a
+    = NoParam
+    | NewsParam (Relation (Maybe Int32, Maybe Int32) a)
+    | TopicParam {isWelmo :: Bool}
+
 data TableContext a = TableContext
     { tableRel :: Relation () a
     , officeId :: (a -> Int32)
@@ -19,5 +25,5 @@ data TableContext a = TableContext
     , tableName :: TableName
     , pkName :: PkColumn
     , fields :: Fields
-    , params :: Maybe (Relation (Maybe Int32, Maybe Int32) a)
+    , param :: TableContextParam a
     }

@@ -5,7 +5,7 @@ module Table.RelAttendantBed where
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 
 import Controller.Types.Class ()
-import Controller.Update.TableContext (TableContext(TableContext))
+import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
@@ -21,4 +21,4 @@ tableContext = TableContext
     "rel_attendant_bed"
     "office_id"
     fields
-    Nothing
+    NoParam

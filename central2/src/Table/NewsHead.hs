@@ -7,7 +7,7 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
-import Controller.Update.TableContext (TableContext(TableContext))
+import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NewsParam))
 import DataSource (defineTable)
 import qualified Query
 import TH (mkFields)
@@ -24,4 +24,4 @@ tableContext = TableContext
     "news_head"
     "id"
     fields
-    (Just $ Query.between newsHead dateYmd')
+    (NewsParam $ Query.between newsHead dateYmd')

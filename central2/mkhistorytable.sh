@@ -122,4 +122,4 @@
 
 #./dist/build/createtable/createtable -s id news_head
 
-./dist/build/createtable/createtable -s id topic
+#./dist/build/createtable/createtable -s id topic

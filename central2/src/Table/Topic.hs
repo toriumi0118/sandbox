@@ -6,7 +6,7 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
-import Controller.Update.TableContext (TableContext(TableContext))
+import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(TopicParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
@@ -14,12 +14,12 @@ defineTable "topic"
 deriveJSON defaultOptions ''Topic
 mkFields ''Topic
 
-tableContext :: TableContext Topic
-tableContext = TableContext
+tableContext :: Bool -> TableContext Topic
+tableContext isWelmo = TableContext
     topic
     id
     id'
     "topic"
     "id"
     fields
-    Nothing
+    (TopicParam isWelmo)

@@ -36,7 +36,7 @@ import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
-import Controller.Update.UpdateData (updatedData, History, DataProvider(..), UpdateData)
+import Controller.Update.UpdateData (updatedData, History, UpdateData)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
@@ -133,16 +133,15 @@ contents (Auth deviceId) = do
         addData conn KH.historyContext from to $
             Controller.Update.Kyotaku.updateData conn
         addData conn OAH.historyContext from to $ \hs ->
-            [updatedData Default conn hs Table.OfficePdf.tableContext]
+            [updatedData conn hs Table.OfficePdf.tableContext]
         addData conn OCH.historyContext from to $
             Controller.Update.OfficeCase.updateData conn
         addData conn OSPH.historyContext from to $ \hs ->
-            [updatedData Default conn hs Table.OfficePdf.tableContext]
+            [updatedData conn hs Table.OfficePdf.tableContext]
         addData conn NH.historyContext from to $ \hs ->
-            [updatedData NewsData conn hs Table.NewsHead.tableContext]
+            [updatedData conn hs Table.NewsHead.tableContext]
         addData conn TH.historyContext from to $ \hs ->
-            [updatedData Default conn hs $
-                Table.Topic.tableContext isWelmo]
+            [updatedData conn hs $ Table.Topic.tableContext isWelmo]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

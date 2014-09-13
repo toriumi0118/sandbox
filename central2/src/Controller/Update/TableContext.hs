@@ -15,8 +15,13 @@ type Fields = [String]
 
 data TableContextParam a
     = NoParam
-    | NewsParam (Relation (Maybe Int32, Maybe Int32) a)
-    | TopicParam {isWelmo :: Bool}
+    | NewsParam 
+        { relTable :: Relation (Maybe Int32, Maybe Int32) a
+        , qParam :: IO (Maybe Int32, Maybe Int32)
+        }
+    | TopicParam
+        { isWelmo :: Bool
+        }
 
 data TableContext a = TableContext
     { tableRel :: Relation () a

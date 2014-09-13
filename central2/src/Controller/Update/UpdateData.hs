@@ -4,18 +4,17 @@ module Controller.Update.UpdateData
     where
 
 import Control.Applicative
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (ToJSON, toJSON, Value)
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Int (Int32)
 import Data.List (partition)
 import Data.Maybe (isJust)
-import qualified Data.Time as Time
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
-import System.Locale (defaultTimeLocale)
 
-import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(..))
+import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(NoParam, NewsParam, TopicParam))
 import DataSource (Connection)
 import qualified Query
 import qualified Table.NewsBody as NB
@@ -39,8 +38,6 @@ type History = (Int32, FileAction)
 
 deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
 
-data DataProvider = Default | NewsData
-
 type UpdatedDataList = forall m. (MonadIO m, Functor m)
     => Connection -> [History] -> [m [Maybe [UpdateData]]]
 
@@ -53,13 +50,12 @@ classify k (h:hs) (o:os)
     | otherwise          = (h, Nothing):classify k hs (o:os)
 
 deleteData :: (MonadIO m, Functor m)
-    => DataProvider
-    -> Connection
+    => Connection
     -> TableContext a
     -> Int32 -- ^ office id
     -> m (Maybe [UpdateData])
-deleteData NewsData conn ctx@(TableContext _ _ _ tabName keyName _ _) oid = do
-    (Just ds) <- deleteData Default conn ctx oid
+deleteData conn ctx@(TableContext _ _ _ tabName keyName _ (NewsParam _ _)) oid = do
+    (Just ds) <- deleteData conn ctx{param = NoParam} oid
     r1 <- f <$> Query.runQuery conn (Query.byKey NB.newsBody NB.id') (fromIntegral oid)
     r2 <- f <$> Query.runQuery conn (Query.byKey NOR.newsOfficeRel NOR.newsHeadId') (fromIntegral oid)
     return $ Just $ r2 `cm` r1 `cm` ds
@@ -67,7 +63,7 @@ deleteData NewsData conn ctx@(TableContext _ _ _ tabName keyName _ _) oid = do
     f (a:_) = Just $
         UpdateData (fromIntegral oid) DELETE tabName keyName [toJSON a]
     f []    = Nothing
-deleteData Default _ (TableContext _ _ _ tabName keyName _ _) oid =
+deleteData _ (TableContext _ _ _ tabName keyName _ _) oid =
     return $ Just $ (:[]) $ UpdateData
         oid'
         DELETE
@@ -79,15 +75,14 @@ deleteData Default _ (TableContext _ _ _ tabName keyName _ _) oid =
     oid' = fromIntegral oid
 
 toUpdateData :: (MonadIO m, Functor m, ToJSON a)
-    => DataProvider
-    -> Connection
+    => Connection
     -> TableContext a
     -> (History, Maybe a)
     -> m (Maybe [UpdateData])
-toUpdateData dp c ctx ((i, DELETE), _      ) = deleteData dp c ctx i
-toUpdateData dp c ctx ((i, UPDATE), Nothing) = deleteData dp c ctx i
-toUpdateData _  _ _   (_          , Nothing) = return Nothing
-toUpdateData _  _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
+toUpdateData c ctx ((i, DELETE), _      ) = deleteData c ctx i
+toUpdateData c ctx ((i, UPDATE), Nothing) = deleteData c ctx i
+toUpdateData _ _   (_          , Nothing) = return Nothing
+toUpdateData _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
     return $ Just $ (:[]) $ UpdateData
         (fromIntegral $ k o)
         act
@@ -96,30 +91,25 @@ toUpdateData _  _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
         [toJSON fs, toJSON [o]]
 
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
-    => DataProvider
-    -> Connection
+    => Connection
     -> [History]
     -> TableContext a
     -> m [Maybe [UpdateData]]
-updatedData dp conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
+updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
     (del2, os) <- partition (isJust . snd) . classify k oth
         <$> case mp of
-            NewsParam p' -> liftIO param >>=
+            NewsParam p' p     -> liftIO p >>=
                 Query.runQuery conn (Query.inList p' k' $ map fst oth)
-            _            ->
+            TopicParam True    ->
+                Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+            TopicParam False   -> do
+                as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+                when (null as) $ fail "Topics are not exist."
+                undefined
+            NoParam            ->
                 Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-    mapM (toUpdateData dp conn ctx) os'
-  where
-    param = do
-        to <- Time.getZonedTime
-        let (Time.UTCTime day diff) = Time.zonedTimeToUTC to
-        let sut = Time.UTCTime (Time.addDays (-180) day) diff
-        from <- Time.utcToLocalZonedTime sut
-        return (f from, f to)
-      where
-        fmt = "%0C%y%m%d"
-        f = Just . read . Time.formatTime defaultTimeLocale fmt
+    mapM (toUpdateData conn ctx) os'

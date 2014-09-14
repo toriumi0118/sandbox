@@ -141,11 +141,11 @@ contents (Auth deviceId) = do
         addData conn NH.historyContext from to $ \hs ->
             [updatedData conn hs Table.NewsHead.tableContext]
         addData conn TH.historyContext from to $ \hs ->
-            [updatedData conn hs $ Table.Topic.tableContext isWelmo]
+            [updatedData conn hs $ Table.Topic.tableContext dev]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do
     liftIO $ print $ Scotty.showError e
     clientError
   where
-    isWelmo = deviceId == -1
+    dev = if deviceId == -1 then Nothing else Just (fromIntegral deviceId)

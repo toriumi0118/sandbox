@@ -3,6 +3,7 @@
 module Table.Topic where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
+import Data.Int (Int32)
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -14,12 +15,15 @@ defineTable "topic"
 deriveJSON defaultOptions ''Topic
 mkFields ''Topic
 
-tableContext :: Bool -> TableContext Topic
-tableContext isWelmo = TableContext
+tableContext :: Maybe Int32 -> TableContext Topic
+tableContext devideId = TableContext
     topic
     id
     id'
     "topic"
     "id"
     fields
-    (TopicParam isWelmo)
+    (TopicParam devideId f)
+
+f :: Maybe (Double, Double) -> Topic -> Bool
+f = undefined

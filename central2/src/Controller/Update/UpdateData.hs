@@ -4,19 +4,23 @@ module Controller.Update.UpdateData
     where
 
 import Control.Applicative
+import Control.Arrow ((&&&))
 import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (ToJSON, toJSON, Value)
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Int (Int32)
 import Data.List (partition)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromJust)
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
+import qualified Safe
 
 import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(NoParam, NewsParam, TopicParam))
 import DataSource (Connection)
 import qualified Query
+import qualified Table.Device as D
+import qualified Table.Kyotaku as K
 import qualified Table.NewsBody as NB
 import qualified Table.NewsOfficeRel as NOR
 import Util (initIf, cm)
@@ -90,6 +94,11 @@ toUpdateData _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
         pk
         [toJSON fs, toJSON [o]]
 
+pos :: Maybe K.Kyotaku -> Maybe (Double, Double)
+pos mk = do
+    (x, y) <- (fmap read . K.latitude &&& fmap read . K.longitude) <$> mk
+    (,) <$> x <*> y
+
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => Connection
     -> [History]
@@ -99,15 +108,20 @@ updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
     (del2, os) <- partition (isJust . snd) . classify k oth
         <$> case mp of
-            NewsParam p' p     -> liftIO p >>=
+            NewsParam p' p      -> liftIO p >>=
                 Query.runQuery conn (Query.inList p' k' $ map fst oth)
-            TopicParam True    ->
+            TopicParam Nothing  _ ->
                 Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
-            TopicParam False   -> do
+            TopicParam (Just d) f -> do
                 as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
                 when (null as) $ fail "Topics are not exist."
-                undefined
-            NoParam            ->
+                -- XXX:Unsafe
+                kyo <- fmap Safe.headMay
+                    $ Query.runQuery conn (Query.byKey D.device D.id') d
+                    >>= Query.runQuery conn (Query.byKey K.kyotaku K.officeId')
+                        . fromIntegral . fromJust . D.kyotakuId . head
+                return $ filter (f $ pos kyo) as
+            NoParam             ->
                 Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1

@@ -20,7 +20,8 @@ data TableContextParam a
         , qParam :: IO (Maybe Int32, Maybe Int32)
         }
     | TopicParam
-        { isWelmo :: Bool
+        { deviceId :: Maybe Int32
+        , officeFilter :: Maybe (Double, Double) -> a -> Bool
         }
 
 data TableContext a = TableContext

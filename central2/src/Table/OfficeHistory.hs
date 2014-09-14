@@ -3,6 +3,7 @@
 module Table.OfficeHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
+import Prelude hiding (id)
 
 import Controller.Types.Class (History)
 import qualified Controller.Types.VersionupHisIds as V

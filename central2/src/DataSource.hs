@@ -35,7 +35,6 @@ defineTable table = do
         (dbSchema c)
         table
         [derivingShow]
-    runIO $ print $ head ds
     let nts = filter (reserved . fst) $ map (\(n, _, t) -> (n, t)) ls
     decs <- mapM (alias ptName) nts
     return $ ds ++ concat decs

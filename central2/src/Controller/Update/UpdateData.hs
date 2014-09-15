@@ -1,16 +1,20 @@
 {-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes #-}
 
 module Controller.Update.UpdateData
-    where
+    ( UpdateData (..)
+    , UpdatedDataList
+    , History
+    , updatedData
+    ) where
 
 import Control.Applicative
-import Control.Monad (when, filterM)
+import Control.Monad (when, filterM, join)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (ToJSON, toJSON, Value)
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Int (Int32)
 import Data.List (partition)
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (isJust)
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
@@ -93,23 +97,20 @@ toUpdateData _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
         pk
         [toJSON fs, toJSON [o]]
 
---type OfficeId = Int32
---
---getOffices :: (MonadIO m, Functor m)
---    => Connection -> [Maybe OfficeId] -> [m (Maybe O.Office)]
---getOffices conn = map
---    $ maybe (return Nothing)
---    $ fmap Safe.headMay . Query.runQuery conn (Query.byKey O.office O.officeId')
-
 type DeviceId = Int32
 
 getKyotaku :: (MonadIO m, Functor m)
     => Connection -> DeviceId -> m (Maybe K.Kyotaku)
-getKyotaku conn devId = fmap Safe.headMay
-    $ Query.runQuery conn (Query.byKey D.device D.id') devId
-        >>= Query.runQuery conn (Query.byKey K.kyotaku K.officeId')
-            -- XXX:Unsafe
-            . fromIntegral . fromJust . D.kyotakuId . head
+getKyotaku conn devId =
+    Safe.headMay
+        <$> Query.runQuery conn (Query.byKey D.device D.id') devId
+    >>= maybe
+        (return Nothing)
+        (fmap Safe.headMay
+            . Query.runQuery conn (Query.byKey K.kyotaku K.officeId'))
+      . fmap fromIntegral
+      . join
+      . fmap D.kyotakuId
 
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => Connection
@@ -127,10 +128,6 @@ updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
             as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
             when (null as) $ fail "Topics are not exist."
             filterM (f conn $ pos K.latitude K.longitude <$> getKyotaku conn d) as
---                $ zip as
---                $ map (pos O.latitude O.longitude <$>)
---                $ getOffices conn
---                $ map oidf as
         NoParam ->
             Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
     let os' = os

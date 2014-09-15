@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts, TemplateHaskell #-}
 
 module Controller.Update
-    ( UpdateData(..)
+    ( UpdateData
     , contents
     ) where
 

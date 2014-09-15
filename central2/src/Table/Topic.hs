@@ -41,7 +41,8 @@ f conn kPos tp = kPos >>= maybe kyotakuIsNull (g conn tp)
     kyotakuIsNull = return False
 
 hubenyDist :: Position -> Position -> Double
-hubenyDist (Pos lat1 lon1) (Pos lat2 lon2) = sqrt $ dym ^ 2 + dxncos ^ 2
+hubenyDist (Pos lat1 lon1) (Pos lat2 lon2) =
+    sqrt $ dym ^ (2 :: Int) + dxncos ^ (2 :: Int)
   where
     a = 6378137.000
     e2 = 0.00669438002301188
@@ -51,8 +52,8 @@ hubenyDist (Pos lat1 lon1) (Pos lat2 lon2) = sqrt $ dym ^ 2 + dxncos ^ 2
     dy = deg2rad $ lat1 - lat2
     dx = deg2rad $ lon1 - lon2
     si = sin my
-    w = sqrt $ 1.0 - e2 * si ^ 2
-    m = mnum / w ^ 3
+    w = sqrt $ 1.0 - e2 * si ^ (2 :: Int)
+    m = mnum / w ^ (3 :: Int)
     n = a / w
     dym = dy * m
     dxncos = dx * n * cos my

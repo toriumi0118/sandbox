@@ -4,8 +4,7 @@ module Controller.Update.UpdateData
     where
 
 import Control.Applicative
-import Control.Arrow ((&&&))
-import Control.Monad (when, forM)
+import Control.Monad (when, filterM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Aeson (ToJSON, toJSON, Value)
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
@@ -16,14 +15,13 @@ import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
 
-import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(NoParam, NewsParam, TopicParam), Position(Pos))
+import Controller.Update.TableContext (TableContext(..), TableName, PkColumn, TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Device as D
 import qualified Table.Kyotaku as K
 import qualified Table.NewsBody as NB
 import qualified Table.NewsOfficeRel as NOR
-import qualified Table.Office as O
 import Util (initIf, cm)
 
 data FileAction = INSERT | DELETE | UPDATE
@@ -95,13 +93,23 @@ toUpdateData _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
         pk
         [toJSON fs, toJSON [o]]
 
-pos :: (a -> Maybe String)
-    -> (a -> Maybe String)
-    -> Maybe a
-    -> Maybe Position
-pos lx ly mk = do
-    (x, y) <- (fmap read . lx &&& fmap read . ly) <$> mk
-    Pos <$> x <*> y
+--type OfficeId = Int32
+--
+--getOffices :: (MonadIO m, Functor m)
+--    => Connection -> [Maybe OfficeId] -> [m (Maybe O.Office)]
+--getOffices conn = map
+--    $ maybe (return Nothing)
+--    $ fmap Safe.headMay . Query.runQuery conn (Query.byKey O.office O.officeId')
+
+type DeviceId = Int32
+
+getKyotaku :: (MonadIO m, Functor m)
+    => Connection -> DeviceId -> m (Maybe K.Kyotaku)
+getKyotaku conn devId = fmap Safe.headMay
+    $ Query.runQuery conn (Query.byKey D.device D.id') devId
+        >>= Query.runQuery conn (Query.byKey K.kyotaku K.officeId')
+            -- XXX:Unsafe
+            . fromIntegral . fromJust . D.kyotakuId . head
 
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => Connection
@@ -110,32 +118,21 @@ updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     -> m [Maybe [UpdateData]]
 updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
     let (del1, oth) = partition ((==) DELETE . snd) hs
-    (del2, os) <- partition (isJust . snd) . classify k oth
-        <$> case mp of
-            NewsParam p' p -> liftIO p >>=
-                Query.runQuery conn (Query.inList p' k' $ map fst oth)
-            TopicParam Nothing  _    _ ->
-                Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
-            TopicParam (Just d) oidf f -> do
-                as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
-                when (null as) $ fail "Topics are not exist."
-                -- XXX:Unsafe
-                kyo <- fmap Safe.headMay
-                    $ Query.runQuery conn (Query.byKey D.device D.id') d
-                    >>= Query.runQuery conn (Query.byKey K.kyotaku K.officeId')
-                        . fromIntegral . fromJust . D.kyotakuId . head
-                -- [Topic]から[Office]を作ってOffice位置情報リストを作る
-                -- filterの中で位置情報リストを参照する
-                let oids = map oidf as
-                os <- forM oids $ maybe (return Nothing) $
-                    fmap Safe.headMay . Query.runQuery conn (Query.byKey O.office O.officeId')
-                return
-                    $ map fst
-                    $ filter (f $ pos K.latitude K.longitude kyo)
-                    $ zip as
-                    $ map (pos O.latitude O.longitude) os
-            NoParam ->
-                Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+    (del2, os) <- partition (isJust . snd) . classify k oth <$> case mp of
+        NewsParam p' p -> liftIO p >>=
+            Query.runQuery conn (Query.inList p' k' $ map fst oth)
+        TopicParam Nothing  _ ->
+            Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+        TopicParam (Just d) f -> do
+            as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+            when (null as) $ fail "Topics are not exist."
+            filterM (f conn $ pos K.latitude K.longitude <$> getKyotaku conn d) as
+--                $ zip as
+--                $ map (pos O.latitude O.longitude <$>)
+--                $ getOffices conn
+--                $ map oidf as
+        NoParam ->
+            Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2

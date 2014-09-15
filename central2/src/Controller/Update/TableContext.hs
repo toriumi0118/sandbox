@@ -4,6 +4,7 @@ module Controller.Update.TableContext
     ( TableName, PkColumn, Fields
     , TableContext (..)
     , TableContextParam (..)
+    , Position (..)
     ) where
 
 import Data.Int (Int32)
@@ -13,6 +14,8 @@ type TableName = String
 type PkColumn = String
 type Fields = [String]
 
+data Position = Pos Double Double
+
 data TableContextParam a
     = NoParam
     | NewsParam 
@@ -21,7 +24,8 @@ data TableContextParam a
         }
     | TopicParam
         { deviceId :: Maybe Int32
-        , officeFilter :: Maybe (Double, Double) -> a -> Bool
+        , officeIdParam :: a -> Maybe Int32
+        , officeFilter :: Maybe Position -> (a, Maybe Position) -> Bool
         }
 
 data TableContext a = TableContext

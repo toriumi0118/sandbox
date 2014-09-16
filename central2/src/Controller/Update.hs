@@ -10,7 +10,7 @@ import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Reader (MonadReader)
+import Control.Monad.Reader (MonadReader, ReaderT)
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.State (MonadState)
 import qualified Control.Monad.State as State
@@ -120,12 +120,12 @@ addData
         MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
     => UpdateResponseKey
     -> HistoryContext a
-    -> ([History] -> [m [Maybe [UpdateData]]])
+    -> [ReaderT (Connection, [History]) m [Maybe [UpdateData]]]
     -> t m ()
 addData urkey ctx udata = do
     (conn, from, to) <- Reader.ask 
     hs <- lift $ targetHistories conn ctx from to
-    lift (mconcat <$> sequence (udata hs))
+    lift (mconcat <$> Reader.runReaderT (sequence udata) (conn, hs))
         >>= State.modify . f . toJSON
   where
     f = f' urkey
@@ -138,26 +138,18 @@ contents (Auth deviceId) = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $
             flip Reader.runReaderT (conn, from, to) $ do
-        addData DATA OH.historyContext $
-            Controller.Update.Office.updateData conn
-        addData DATA KH.historyContext $
-            Controller.Update.Kyotaku.updateData conn
-        addData DATA OAH.historyContext $ \hs ->
-            [updatedData conn hs Table.OfficePdf.tableContext]
-        addData DATA OCH.historyContext $
-            Controller.Update.OfficeCase.updateData conn
-        addData DATA OSPH.historyContext $ \hs ->
-            [updatedData conn hs Table.OfficePdf.tableContext]
-        addData DATA NH.historyContext $ \hs ->
-            [updatedData conn hs Table.NewsHead.tableContext]
-        addData DATA TH.historyContext $ \hs ->
-            [updatedData conn hs $ Table.Topic.tableContext dev]
-        addData DATA PDH.historyContext $
-            Controller.Update.PdfDoc.updateData conn
-        addData DATA CH.historyContext $ \hs ->
-            [updatedData conn hs $ Table.Catalog.tableContext]
---        addData FILES conn OIH.historyContext from to $ \hs ->
---            [updatedData conn hs $ undefined]
+        addData DATA OH.historyContext Controller.Update.Office.updateData
+        addData DATA KH.historyContext Controller.Update.Kyotaku.updateData
+        addData DATA OAH.historyContext [updatedData Table.OfficePdf.tableContext]
+        addData DATA OCH.historyContext Controller.Update.OfficeCase.updateData
+        addData DATA OSPH.historyContext
+            [updatedData Table.OfficePdf.tableContext]
+        addData DATA NH.historyContext [updatedData Table.NewsHead.tableContext]
+        addData DATA TH.historyContext
+            [updatedData $ Table.Topic.tableContext dev]
+        addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
+        addData DATA CH.historyContext [updatedData Table.Catalog.tableContext]
+--        addData FILES OIH.historyContext [updatedData undefined]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

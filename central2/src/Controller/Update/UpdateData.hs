@@ -9,7 +9,10 @@ module Controller.Update.UpdateData
 
 import Control.Applicative
 import Control.Monad (when, filterM, join)
+import Control.Monad.Reader (MonadReader, ReaderT)
+import qualified Control.Monad.Reader as Reader
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import Data.Aeson (ToJSON, toJSON, Value)
 import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
 import Data.Int (Int32)
@@ -45,8 +48,9 @@ type History = (Int32, FileAction)
 
 deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
 
-type UpdatedDataList = forall m. (MonadIO m, Functor m)
-    => Connection -> [History] -> [m [Maybe [UpdateData]]]
+type UpdatedDataList = forall r m.
+    (MonadIO m, Functor m, MonadTrans r, MonadReader (Connection, [History]) (r m))
+    => [r m [Maybe [UpdateData]]]
 
 classify :: (a -> Int32) -> [History] -> [a]
     -> [(History, Maybe a)]
@@ -112,14 +116,15 @@ getKyotaku conn devId =
       . join
       . fmap D.kyotakuId
 
-updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
-    => Connection
-    -> [History]
-    -> TableContext a
-    -> m [Maybe [UpdateData]]
-updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
+updatedData
+    :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a,
+        MonadTrans t, MonadReader (Connection, [History]) (t m))
+    => TableContext a
+    -> t m [Maybe [UpdateData]]
+updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
+    (conn, hs) <- Reader.ask
     let (del1, oth) = partition ((==) DELETE . snd) hs
-    (del2, os) <- partition (isJust . snd) . classify k oth <$> case mp of
+    (del2, os) <- lift $ partition (isJust . snd) . classify k oth <$> case mp of
         NewsParam p' p -> liftIO p >>=
             Query.runQuery conn (Query.inList p' k' $ map fst oth)
         TopicParam Nothing  _ ->
@@ -133,4 +138,4 @@ updatedData conn hs ctx@(TableContext rel k k' _ _ _ mp) = do
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-    mapM (toUpdateData conn ctx) os'
+    lift $ mapM (toUpdateData conn ctx) os'

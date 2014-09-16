@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Controller.Update.Kyotaku
     ( updateData
     ) where
@@ -13,13 +15,13 @@ import qualified Table.RelKyotakuServiceArea
 import qualified Table.RelKyotakuTellEmergency
 
 updateData :: UpdatedDataList
-updateData conn hs =
-    [ updatedData conn hs Table.Kyotaku.tableContext
-    , updatedData conn hs Table.KyotakuLicense.tableContext
-    , updatedData conn hs Table.RelKyotakuServiceArea.tableContext
-    , updatedData conn hs Table.RelKyotakuCareAddFeeStaff.tableContext
-    , updatedData conn hs Table.RelKyotakuCareAddFeeService.tableContext
-    , updatedData conn hs Table.RelKyotakuCareAddFeeOther.tableContext
-    , updatedData conn hs Table.RelKyotakuTellEmergency.tableContext
-    , updatedData conn hs Table.KyotakuBusinessTime.tableContext
+updateData =
+    [ updatedData Table.Kyotaku.tableContext
+    , updatedData Table.KyotakuLicense.tableContext
+    , updatedData Table.RelKyotakuServiceArea.tableContext
+    , updatedData Table.RelKyotakuCareAddFeeStaff.tableContext
+    , updatedData Table.RelKyotakuCareAddFeeService.tableContext
+    , updatedData Table.RelKyotakuCareAddFeeOther.tableContext
+    , updatedData Table.RelKyotakuTellEmergency.tableContext
+    , updatedData Table.KyotakuBusinessTime.tableContext
     ]

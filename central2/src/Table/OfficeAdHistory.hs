@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
 
 module Table.OfficeAdHistory where
 

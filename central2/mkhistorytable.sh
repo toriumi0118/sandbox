@@ -123,3 +123,6 @@
 #./dist/build/createtable/createtable -s id news_head
 
 #./dist/build/createtable/createtable -s id topic
+
+./dist/build/createtable/createtable -s id pdf_doc
+./dist/build/createtable/createtable -s pdf_doc_id pdf_doc_rel

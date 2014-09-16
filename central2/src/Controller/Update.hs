@@ -34,19 +34,21 @@ import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
+import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
 import Controller.Update.UpdateData (updatedData, History, UpdateData)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.KyotakuHistory as KH
+import qualified Table.NewsHistory as NH
+import qualified Table.NewsHead
 import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficePdf
 import qualified Table.OfficeSpPriceHistory as OSPH
-import qualified Table.NewsHistory as NH
-import qualified Table.NewsHead
+import qualified Table.PdfDocHistory as PDH
 import qualified Table.TopicHistory as TH
 import qualified Table.Topic
 import Util (clientError)
@@ -142,6 +144,8 @@ contents (Auth deviceId) = do
             [updatedData conn hs Table.NewsHead.tableContext]
         addData conn TH.historyContext from to $ \hs ->
             [updatedData conn hs $ Table.Topic.tableContext dev]
+        addData conn PDH.historyContext from to $
+            Controller.Update.PdfDoc.updateData conn
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

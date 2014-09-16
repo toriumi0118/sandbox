@@ -11,6 +11,8 @@ import Control.Applicative
 import Control.Monad (when, filterM, join)
 import Control.Monad.Reader (MonadReader, ReaderT)
 import qualified Control.Monad.Reader as Reader
+import Control.Monad.Writer (MonadWriter, WriterT)
+import qualified Control.Monad.Writer as Writer
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Data.Aeson (ToJSON, toJSON, Value)
@@ -48,9 +50,8 @@ type History = (Int32, FileAction)
 
 deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
 
-type UpdatedDataList = forall r m.
-    (MonadIO m, Functor m, MonadTrans r, MonadReader (Connection, [History]) (r m))
-    => [r m [Maybe [UpdateData]]]
+type UpdatedDataList m
+    = WriterT [Maybe[UpdateData]] (ReaderT (Connection, [History]) m)
 
 classify :: (a -> Int32) -> [History] -> [a]
     -> [(History, Maybe a)]
@@ -118,9 +119,10 @@ getKyotaku conn devId =
 
 updatedData
     :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a,
-        MonadTrans t, MonadReader (Connection, [History]) (t m))
+        MonadTrans t, MonadReader (Connection, [History]) (t m),
+        MonadWriter [Maybe [UpdateData]] (t m))
     => TableContext a
-    -> t m [Maybe [UpdateData]]
+    -> t m ()
 updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
     (conn, hs) <- Reader.ask
     let (del1, oth) = partition ((==) DELETE . snd) hs
@@ -138,4 +140,5 @@ updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
-    lift $ mapM (toUpdateData conn ctx) os'
+    r <- lift $ mapM (toUpdateData conn ctx) os'
+    Writer.tell r

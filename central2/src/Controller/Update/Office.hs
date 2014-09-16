@@ -4,6 +4,8 @@ module Controller.Update.Office
     ( updateData
     ) where
 
+import Control.Monad.IO.Class (MonadIO)
+
 import Controller.Update.UpdateData (UpdatedDataList, updatedData)
 import qualified Table.BusinessTime
 import qualified Table.DementiaBusinessTime
@@ -112,112 +114,111 @@ import qualified Table.RelWithPet
 import qualified Table.ServiceTime
 import qualified Table.Vacancy
 
-updateData :: UpdatedDataList
-updateData =
-    [ updatedData Table.Office.tableContext
-    , updatedData Table.OfficePrice.tableContext
-    , updatedData Table.OfficeUserInfo.tableContext
-    , updatedData Table.OfficeLicence.tableContext
-    , updatedData Table.OfficeDementia.tableContext
-    , updatedData Table.OfficeContract.tableContext
-    , updatedData Table.RelSpecialField.tableContext
-    , updatedData Table.RelWithPet.tableContext
-    , updatedData Table.RelLandClass.tableContext
-    , updatedData Table.RelAddFee.tableContext
-    , updatedData Table.RelAddFeeWorker.tableContext
-    , updatedData Table.RelAddFeePrecaution.tableContext
-    , updatedData Table.RelAddFeeHelpWorker.tableContext
-    , updatedData Table.RelHelpLevel.tableContext
-    , updatedData Table.RelDementiaAddFee.tableContext
-    , updatedData Table.RelDementiaAddFeeWorker.tableContext
-    , updatedData Table.RelDementiaAddFeePrecaution.tableContext
-    , updatedData Table.RelDementiaAddFeeHelpWorker.tableContext
-    , updatedData Table.RelDementiaType.tableContext
-    , updatedData Table.RelDementiaHelpLevel.tableContext
-    , updatedData Table.RelDementiaJudge.tableContext
-    , updatedData Table.RelDementiaStudy.tableContext
-    , updatedData Table.RelDementiaFloor.tableContext
-    , updatedData Table.RelFloorCnt.tableContext
-    , updatedData Table.RelArchitecture.tableContext
-    , updatedData Table.RelElevator.tableContext
-    , updatedData Table.RelDesign.tableContext
-    , updatedData Table.RelRemodeling.tableContext
-    , updatedData Table.RelWheelchair.tableContext
-    , updatedData Table.RelSingleCare.tableContext
-    , updatedData Table.RelOralCare.tableContext
-    , updatedData Table.RelTerminalCare.tableContext
-    , updatedData Table.RelExtra.tableContext
-    , updatedData Table.RelNight.tableContext
-    , updatedData Table.RelDriveTime.tableContext
-    , updatedData Table.RelDriveRange.tableContext
-    , updatedData Table.RelAttendantBed.tableContext
-    , updatedData Table.RelCarLogo.tableContext
-    , updatedData Table.RelSelfOut.tableContext
-    , updatedData Table.RelInfoDiscovery.tableContext
-    , updatedData Table.RelDoseManage.tableContext
-    , updatedData Table.RelSocialAid.tableContext
-    , updatedData Table.RelPeeSameSex.tableContext
-    , updatedData Table.RelHiyari.tableContext
-    , updatedData Table.RelHotline.tableContext
-    , updatedData Table.RelVolunteer.tableContext
-    , updatedData Table.RelMassage.tableContext
-    , updatedData Table.RelMealStart.tableContext
-    , updatedData Table.RelMealMenu.tableContext
-    , updatedData Table.RelMealPlace.tableContext
-    , updatedData Table.RelMealDietician.tableContext
-    , updatedData Table.RelMealMadeIn.tableContext
-    , updatedData Table.RelMealDinner.tableContext
-    , updatedData Table.RelMealDrink.tableContext
-    , updatedData Table.RelMealBuffet.tableContext
-    , updatedData Table.RelMealOut.tableContext
-    , updatedData Table.RelMealKampo.tableContext
-    , updatedData Table.RelMealSnack.tableContext
-    , updatedData Table.RelBathSameSex.tableContext
-    , updatedData Table.RelBathJet.tableContext
-    , updatedData Table.RelNewspaper.tableContext
-    , updatedData Table.RelUserTablet.tableContext
-    , updatedData Table.RelBrainTraining.tableContext
-    , updatedData Table.RelBigTv.tableContext
-    , updatedData Table.RelBusinessKind.tableContext
-    , updatedData Table.RelExperiencePrice.tableContext
-    , updatedData Table.RelPet.tableContext
-    , updatedData Table.RelWithBuilding.tableContext
-    , updatedData Table.RelScale.tableContext
-    , updatedData Table.RelDementiaEndingCourse.tableContext
-    , updatedData Table.RelNurseCall.tableContext
-    , updatedData Table.RelFacility.tableContext
-    , updatedData Table.RelSuperPlayer.tableContext
-    , updatedData Table.RelMaleDay.tableContext
-    , updatedData Table.RelFemaleDay.tableContext
-    , updatedData Table.RelStayNight.tableContext
-    , updatedData Table.RelRecreation.tableContext
-    , updatedData Table.RelMedical.tableContext
-    , updatedData Table.RelMedicalDay.tableContext
-    , updatedData Table.RelLocalCommunication.tableContext
-    , updatedData Table.RelOrientalMedicine.tableContext
-    , updatedData Table.RelBathMachine.tableContext
-    , updatedData Table.RelBathType.tableContext
-    , updatedData Table.RelBathWay.tableContext
-    , updatedData Table.RelBathOnsen.tableContext
-    , updatedData Table.RelBathTime.tableContext
-    , updatedData Table.RelHealthMachine.tableContext
-    , updatedData Table.RelRehabMachine.tableContext
-    , updatedData Table.RelMidnightMeal.tableContext
-    , updatedData Table.RelSpeechTherapist.tableContext
-    , updatedData Table.RelAcupressureTherapist.tableContext
-    , updatedData Table.BusinessTime.tableContext
-    , updatedData Table.DementiaBusinessTime.tableContext
-    , updatedData Table.Vacancy.tableContext
-    , updatedData Table.DementiaVacancy.tableContext
-    , updatedData Table.ServiceTime.tableContext
-    , updatedData Table.DementiaServiceTime.tableContext
-    , updatedData Table.RelViolence.tableContext
-    , updatedData Table.RelFingerTranslator.tableContext
-    , updatedData Table.OfficeImageCom.tableContext
-    , updatedData Table.OfficeAppealPoint.tableContext
-    , updatedData Table.RelMealBreakfast.tableContext
-    , updatedData Table.RelBathMicroBubble.tableContext
-    , updatedData Table.RelAlcohol.tableContext
-    , updatedData Table.RelSmoking.tableContext
-    , updatedData Table.RelMealLaunch.tableContext
-    ]
+updateData :: (MonadIO m, Functor m) => UpdatedDataList m ()
+updateData = do
+    updatedData Table.Office.tableContext
+    updatedData Table.OfficePrice.tableContext
+    updatedData Table.OfficeUserInfo.tableContext
+    updatedData Table.OfficeLicence.tableContext
+    updatedData Table.OfficeDementia.tableContext
+    updatedData Table.OfficeContract.tableContext
+    updatedData Table.RelSpecialField.tableContext
+    updatedData Table.RelWithPet.tableContext
+    updatedData Table.RelLandClass.tableContext
+    updatedData Table.RelAddFee.tableContext
+    updatedData Table.RelAddFeeWorker.tableContext
+    updatedData Table.RelAddFeePrecaution.tableContext
+    updatedData Table.RelAddFeeHelpWorker.tableContext
+    updatedData Table.RelHelpLevel.tableContext
+    updatedData Table.RelDementiaAddFee.tableContext
+    updatedData Table.RelDementiaAddFeeWorker.tableContext
+    updatedData Table.RelDementiaAddFeePrecaution.tableContext
+    updatedData Table.RelDementiaAddFeeHelpWorker.tableContext
+    updatedData Table.RelDementiaType.tableContext
+    updatedData Table.RelDementiaHelpLevel.tableContext
+    updatedData Table.RelDementiaJudge.tableContext
+    updatedData Table.RelDementiaStudy.tableContext
+    updatedData Table.RelDementiaFloor.tableContext
+    updatedData Table.RelFloorCnt.tableContext
+    updatedData Table.RelArchitecture.tableContext
+    updatedData Table.RelElevator.tableContext
+    updatedData Table.RelDesign.tableContext
+    updatedData Table.RelRemodeling.tableContext
+    updatedData Table.RelWheelchair.tableContext
+    updatedData Table.RelSingleCare.tableContext
+    updatedData Table.RelOralCare.tableContext
+    updatedData Table.RelTerminalCare.tableContext
+    updatedData Table.RelExtra.tableContext
+    updatedData Table.RelNight.tableContext
+    updatedData Table.RelDriveTime.tableContext
+    updatedData Table.RelDriveRange.tableContext
+    updatedData Table.RelAttendantBed.tableContext
+    updatedData Table.RelCarLogo.tableContext
+    updatedData Table.RelSelfOut.tableContext
+    updatedData Table.RelInfoDiscovery.tableContext
+    updatedData Table.RelDoseManage.tableContext
+    updatedData Table.RelSocialAid.tableContext
+    updatedData Table.RelPeeSameSex.tableContext
+    updatedData Table.RelHiyari.tableContext
+    updatedData Table.RelHotline.tableContext
+    updatedData Table.RelVolunteer.tableContext
+    updatedData Table.RelMassage.tableContext
+    updatedData Table.RelMealStart.tableContext
+    updatedData Table.RelMealMenu.tableContext
+    updatedData Table.RelMealPlace.tableContext
+    updatedData Table.RelMealDietician.tableContext
+    updatedData Table.RelMealMadeIn.tableContext
+    updatedData Table.RelMealDinner.tableContext
+    updatedData Table.RelMealDrink.tableContext
+    updatedData Table.RelMealBuffet.tableContext
+    updatedData Table.RelMealOut.tableContext
+    updatedData Table.RelMealKampo.tableContext
+    updatedData Table.RelMealSnack.tableContext
+    updatedData Table.RelBathSameSex.tableContext
+    updatedData Table.RelBathJet.tableContext
+    updatedData Table.RelNewspaper.tableContext
+    updatedData Table.RelUserTablet.tableContext
+    updatedData Table.RelBrainTraining.tableContext
+    updatedData Table.RelBigTv.tableContext
+    updatedData Table.RelBusinessKind.tableContext
+    updatedData Table.RelExperiencePrice.tableContext
+    updatedData Table.RelPet.tableContext
+    updatedData Table.RelWithBuilding.tableContext
+    updatedData Table.RelScale.tableContext
+    updatedData Table.RelDementiaEndingCourse.tableContext
+    updatedData Table.RelNurseCall.tableContext
+    updatedData Table.RelFacility.tableContext
+    updatedData Table.RelSuperPlayer.tableContext
+    updatedData Table.RelMaleDay.tableContext
+    updatedData Table.RelFemaleDay.tableContext
+    updatedData Table.RelStayNight.tableContext
+    updatedData Table.RelRecreation.tableContext
+    updatedData Table.RelMedical.tableContext
+    updatedData Table.RelMedicalDay.tableContext
+    updatedData Table.RelLocalCommunication.tableContext
+    updatedData Table.RelOrientalMedicine.tableContext
+    updatedData Table.RelBathMachine.tableContext
+    updatedData Table.RelBathType.tableContext
+    updatedData Table.RelBathWay.tableContext
+    updatedData Table.RelBathOnsen.tableContext
+    updatedData Table.RelBathTime.tableContext
+    updatedData Table.RelHealthMachine.tableContext
+    updatedData Table.RelRehabMachine.tableContext
+    updatedData Table.RelMidnightMeal.tableContext
+    updatedData Table.RelSpeechTherapist.tableContext
+    updatedData Table.RelAcupressureTherapist.tableContext
+    updatedData Table.BusinessTime.tableContext
+    updatedData Table.DementiaBusinessTime.tableContext
+    updatedData Table.Vacancy.tableContext
+    updatedData Table.DementiaVacancy.tableContext
+    updatedData Table.ServiceTime.tableContext
+    updatedData Table.DementiaServiceTime.tableContext
+    updatedData Table.RelViolence.tableContext
+    updatedData Table.RelFingerTranslator.tableContext
+    updatedData Table.OfficeImageCom.tableContext
+    updatedData Table.OfficeAppealPoint.tableContext
+    updatedData Table.RelMealBreakfast.tableContext
+    updatedData Table.RelBathMicroBubble.tableContext
+    updatedData Table.RelAlcohol.tableContext
+    updatedData Table.RelSmoking.tableContext
+    updatedData Table.RelMealLaunch.tableContext

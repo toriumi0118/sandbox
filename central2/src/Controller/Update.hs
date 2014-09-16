@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts, TemplateHaskell, RankNTypes #-}
 
 module Controller.Update
     ( UpdateData
@@ -10,10 +10,11 @@ import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Reader (MonadReader, ReaderT)
+import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.State (MonadState)
 import qualified Control.Monad.State as State
+import qualified Control.Monad.Writer as Writer
 import Control.Monad.Trans.Class (lift, MonadTrans)
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Bifunctor (bimap)
@@ -39,7 +40,7 @@ import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
-import Controller.Update.UpdateData (updatedData, History, UpdateData)
+import Controller.Update.UpdateData (updatedData, History, UpdateData, UpdatedDataList)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Catalog
@@ -120,13 +121,13 @@ addData
         MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
     => UpdateResponseKey
     -> HistoryContext a
-    -> [ReaderT (Connection, [History]) m [Maybe [UpdateData]]]
+    -> UpdatedDataList m ()
     -> t m ()
 addData urkey ctx udata = do
     (conn, from, to) <- Reader.ask 
     hs <- lift $ targetHistories conn ctx from to
-    lift (mconcat <$> Reader.runReaderT (sequence udata) (conn, hs))
-        >>= State.modify . f . toJSON
+    d <- lift (mconcat <$> Reader.runReaderT (Writer.execWriterT udata) (conn, hs))
+    State.modify . f . toJSON $ d
   where
     f = f' urkey
     f' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
@@ -140,15 +141,15 @@ contents (Auth deviceId) = do
             flip Reader.runReaderT (conn, from, to) $ do
         addData DATA OH.historyContext Controller.Update.Office.updateData
         addData DATA KH.historyContext Controller.Update.Kyotaku.updateData
-        addData DATA OAH.historyContext [updatedData Table.OfficePdf.tableContext]
+        addData DATA OAH.historyContext $ updatedData Table.OfficePdf.tableContext
         addData DATA OCH.historyContext Controller.Update.OfficeCase.updateData
         addData DATA OSPH.historyContext
-            [updatedData Table.OfficePdf.tableContext]
-        addData DATA NH.historyContext [updatedData Table.NewsHead.tableContext]
+            $ updatedData Table.OfficePdf.tableContext
+        addData DATA NH.historyContext $ updatedData Table.NewsHead.tableContext
         addData DATA TH.historyContext
-            [updatedData $ Table.Topic.tableContext dev]
+            $ updatedData $ Table.Topic.tableContext dev
         addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
-        addData DATA CH.historyContext [updatedData Table.Catalog.tableContext]
+        addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
 --        addData FILES OIH.historyContext [updatedData undefined]
         error "tmp"
       ) >>= Scotty.json

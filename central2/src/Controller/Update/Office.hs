@@ -6,7 +6,8 @@ module Controller.Update.Office
 
 import Control.Monad.IO.Class (MonadIO)
 
-import Controller.Update.UpdateData (UpdatedDataList, updatedData)
+import Controller.Update.DataProvider (DataProvider)
+import Controller.Update.UpdateData (updatedData)
 import qualified Table.BusinessTime
 import qualified Table.DementiaBusinessTime
 import qualified Table.DementiaServiceTime
@@ -114,7 +115,7 @@ import qualified Table.RelWithPet
 import qualified Table.ServiceTime
 import qualified Table.Vacancy
 
-updateData :: (MonadIO m, Functor m) => UpdatedDataList m ()
+updateData :: (MonadIO m, Functor m) => DataProvider m ()
 updateData = do
     updatedData Table.Office.tableContext
     updatedData Table.OfficePrice.tableContext

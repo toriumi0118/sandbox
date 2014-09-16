@@ -14,7 +14,6 @@ import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.State (MonadState)
 import qualified Control.Monad.State as State
-import qualified Control.Monad.Writer as Writer
 import Control.Monad.Trans.Class (lift, MonadTrans)
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Bifunctor (bimap)
@@ -35,12 +34,13 @@ import Auth (Auth(Auth))
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
+import Controller.Update.DataProvider (DataProvider, runDataProvider)
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
-import Controller.Update.UpdateData (updatedData, History, UpdateData, UpdatedDataList)
+import Controller.Update.UpdateData (updatedData, History, UpdateData)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Catalog
@@ -121,12 +121,12 @@ addData
         MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
     => UpdateResponseKey
     -> HistoryContext a
-    -> UpdatedDataList m ()
+    -> DataProvider m ()
     -> t m ()
 addData urkey ctx udata = do
     (conn, from, to) <- Reader.ask 
     hs <- lift $ targetHistories conn ctx from to
-    d <- lift (mconcat <$> Reader.runReaderT (Writer.execWriterT udata) (conn, hs))
+    d <- lift (mconcat <$> runDataProvider conn hs udata)
     State.modify . f . toJSON $ d
   where
     f = f' urkey

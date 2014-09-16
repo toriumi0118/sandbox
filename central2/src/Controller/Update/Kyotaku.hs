@@ -6,7 +6,8 @@ module Controller.Update.Kyotaku
 
 import Control.Monad.IO.Class (MonadIO)
 
-import Controller.Update.UpdateData (UpdatedDataList, updatedData)
+import Controller.Update.DataProvider (DataProvider)
+import Controller.Update.UpdateData (updatedData)
 import qualified Table.Kyotaku
 import qualified Table.KyotakuBusinessTime
 import qualified Table.KyotakuLicense
@@ -16,7 +17,7 @@ import qualified Table.RelKyotakuCareAddFeeStaff
 import qualified Table.RelKyotakuServiceArea
 import qualified Table.RelKyotakuTellEmergency
 
-updateData :: (MonadIO m, Functor m) => UpdatedDataList m ()
+updateData :: (MonadIO m, Functor m) => DataProvider m ()
 updateData = do
     updatedData Table.Kyotaku.tableContext
     updatedData Table.KyotakuLicense.tableContext

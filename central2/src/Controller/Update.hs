@@ -10,9 +10,11 @@ import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Reader (MonadReader)
+import qualified Control.Monad.Reader as Reader
+import Control.Monad.State (MonadState)
 import qualified Control.Monad.State as State
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State (StateT)
+import Control.Monad.Trans.Class (lift, MonadTrans)
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Bifunctor (bimap)
 import Data.Int (Int32, Int64)
@@ -48,6 +50,7 @@ import qualified Table.NewsHead
 import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
+--import qualified Table.OfficeImageHistory as OIH
 import qualified Table.OfficePdf
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
@@ -111,19 +114,21 @@ version = do
     when (from == to) $ fail "already updated"
     return (from, to)
 
-addData :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a)
-    => Connection
+addData
+    :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a,
+        MonadTrans t, MonadState (Map String [Value]) (t m),
+        MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
+    => UpdateResponseKey
     -> HistoryContext a
-    -> VersionupHisIds
-    -> VersionupHisIds
     -> ([History] -> [m [Maybe [UpdateData]]])
-    -> StateT (Map String [Value]) m ()
-addData conn ctx from to udata = do
+    -> t m ()
+addData urkey ctx udata = do
+    (conn, from, to) <- Reader.ask 
     hs <- lift $ targetHistories conn ctx from to
     lift (mconcat <$> sequence (udata hs))
         >>= State.modify . f . toJSON
   where
-    f = f' DATA
+    f = f' urkey
     f' k v m = Map.insert k' (v:fromMaybe [] (Map.lookup k' m)) m
       where
         k' = show k
@@ -131,25 +136,28 @@ addData conn ctx from to udata = do
 contents :: Auth -> ActionM ()
 contents (Auth deviceId) = do
     (from, to) <- version
-    Query.query (\conn -> flip State.execStateT Map.empty $ do
-        addData conn OH.historyContext from to $
+    Query.query (\conn -> flip State.execStateT Map.empty $
+            flip Reader.runReaderT (conn, from, to) $ do
+        addData DATA OH.historyContext $
             Controller.Update.Office.updateData conn
-        addData conn KH.historyContext from to $
+        addData DATA KH.historyContext $
             Controller.Update.Kyotaku.updateData conn
-        addData conn OAH.historyContext from to $ \hs ->
+        addData DATA OAH.historyContext $ \hs ->
             [updatedData conn hs Table.OfficePdf.tableContext]
-        addData conn OCH.historyContext from to $
+        addData DATA OCH.historyContext $
             Controller.Update.OfficeCase.updateData conn
-        addData conn OSPH.historyContext from to $ \hs ->
+        addData DATA OSPH.historyContext $ \hs ->
             [updatedData conn hs Table.OfficePdf.tableContext]
-        addData conn NH.historyContext from to $ \hs ->
+        addData DATA NH.historyContext $ \hs ->
             [updatedData conn hs Table.NewsHead.tableContext]
-        addData conn TH.historyContext from to $ \hs ->
+        addData DATA TH.historyContext $ \hs ->
             [updatedData conn hs $ Table.Topic.tableContext dev]
-        addData conn PDH.historyContext from to $
+        addData DATA PDH.historyContext $
             Controller.Update.PdfDoc.updateData conn
-        addData conn CH.historyContext from to $ \hs ->
+        addData DATA CH.historyContext $ \hs ->
             [updatedData conn hs $ Table.Catalog.tableContext]
+--        addData FILES conn OIH.historyContext from to $ \hs ->
+--            [updatedData conn hs $ undefined]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

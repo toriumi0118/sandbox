@@ -126,3 +126,5 @@
 
 ./dist/build/createtable/createtable -s id pdf_doc
 ./dist/build/createtable/createtable -s pdf_doc_id pdf_doc_rel
+
+./dist/build/createtable/createtable -s id catalog

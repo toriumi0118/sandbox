@@ -132,4 +132,5 @@ intList =
     [ "OfficeCaseRel"
     , "OfficeImageCom"
     , "OfficePdf"
+    , "Catalog"
     ]

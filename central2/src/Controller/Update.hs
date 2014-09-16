@@ -40,6 +40,8 @@ import qualified Controller.Update.OfficeCase
 import Controller.Update.UpdateData (updatedData, History, UpdateData)
 import DataSource (Connection)
 import qualified Query
+import qualified Table.Catalog
+import qualified Table.CatalogHistory as CH
 import qualified Table.KyotakuHistory as KH
 import qualified Table.NewsHistory as NH
 import qualified Table.NewsHead
@@ -146,6 +148,8 @@ contents (Auth deviceId) = do
             [updatedData conn hs $ Table.Topic.tableContext dev]
         addData conn PDH.historyContext from to $
             Controller.Update.PdfDoc.updateData conn
+        addData conn CH.historyContext from to $ \hs ->
+            [updatedData conn hs $ Table.Catalog.tableContext]
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

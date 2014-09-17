@@ -34,7 +34,7 @@ import Auth (Auth(Auth))
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import Controller.Update.DataProvider (DataProvider, runDataProvider)
+import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES))
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
@@ -58,23 +58,6 @@ import qualified Table.PdfDocHistory as PDH
 import qualified Table.TopicHistory as TH
 import qualified Table.Topic
 import Util (clientError)
-
-data UpdateResponseKey
-    = DATA
-    | DAT_INDEX
-    | DAT_ACTION
-    | DAT_TABLE
-    | DAT_PK_COLUMN
-    | DAT_DATA
-    | FILES
-    | OFFICE_KIND
-    | OFFICE_ID
-    | SERVICE_BUILDING_ID
-    | FILE_NAME
-    | FILE_URL
-    | FILE_TYPE
-    | FILE_ACtION
-  deriving (Eq, Ord, Show)
 
 -- | from-toからoffice_idとactionのセットを取得するSQL
 --   古い順にソート

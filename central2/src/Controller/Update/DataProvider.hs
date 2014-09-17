@@ -9,6 +9,7 @@ module Controller.Update.DataProvider
     , UpdateData (..)
     , History
     , FileAction (..)
+    , UpdateResponseKey (..)
     ) where
 
 import Control.Applicative
@@ -17,20 +18,37 @@ import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Writer (MonadWriter, WriterT)
 import qualified Control.Monad.Writer as Writer
-import Data.Aeson (Value, ToJSON)
-import Data.Aeson.TH (deriveJSON, defaultOptions, fieldLabelModifier)
+import Data.Aeson (Value, ToJSON(toJSON))
+import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Data.Int (Int32)
+import qualified Data.Map as Map
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 
 import Controller.Update.TableContext (TableName, PkColumn)
 import DataSource (Connection)
-import Util (initIf)
 
 data FileAction = INSERT | DELETE | UPDATE
   deriving (Show, Read, Eq)
 
 deriveJSON defaultOptions ''FileAction
+
+data UpdateResponseKey
+    = DATA
+    | DAT_INDEX
+    | DAT_ACTION
+    | DAT_TABLE
+    | DAT_PK_COLUMN
+    | DAT_DATA
+    | FILES
+    | OFFICE_KIND
+    | OFFICE_ID
+    | SERVICE_BUILDING_ID
+    | FILE_NAME
+    | FILE_URL
+    | FILE_TYPE
+    | FILE_ACtION
+  deriving (Eq, Ord, Show)
 
 data UpdateData = UpdateData
     { index :: Integer
@@ -40,7 +58,14 @@ data UpdateData = UpdateData
     , data' :: [Value]
     }
 
-deriveJSON defaultOptions{fieldLabelModifier = initIf (=='\'')} ''UpdateData
+instance ToJSON UpdateData where
+    toJSON (UpdateData i a t p d) = toJSON $ Map.mapKeys show $ Map.fromList
+        [ (DAT_INDEX, toJSON i)
+        , (DAT_ACTION, toJSON a)
+        , (DAT_TABLE, toJSON t)
+        , (DAT_PK_COLUMN, toJSON p)
+        , (DAT_DATA, toJSON d)
+        ]
 
 type History = (Int32, FileAction)
 

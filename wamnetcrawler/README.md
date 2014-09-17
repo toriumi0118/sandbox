@@ -1,4 +1,5 @@
 Requirements:
+
 	python > 3.4
 	lxml-3.3.4.win32-py3.4.exe
 
@@ -7,6 +8,7 @@ Requirements:
 		pip install pygeocoder
 
 Usage:
+
 	1. call getnumber_from_wamnet.py
 		: you can get office numbers from wamnet.
 		: (example) python getnumber_from_wamnet.py wamnet_numbers.csv [DAY | KYTAKU]

@@ -1,8 +1,7 @@
 {-# LANGUAGE FlexibleContexts, TemplateHaskell, RankNTypes #-}
 
 module Controller.Update
-    ( UpdateData
-    , contents
+    ( contents
     ) where
 
 import Control.Applicative
@@ -40,7 +39,8 @@ import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
-import Controller.Update.UpdateData (updatedData, History, UpdateData)
+import Controller.Update.UpdateData (updatedData)
+import Controller.Update.UpdateFile (updatedFile)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Catalog
@@ -51,7 +51,7 @@ import qualified Table.NewsHead
 import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
---import qualified Table.OfficeImageHistory as OIH
+import qualified Table.OfficeImageHistory as OIH
 import qualified Table.OfficePdf
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
@@ -133,7 +133,8 @@ contents (Auth deviceId) = do
             $ updatedData $ Table.Topic.tableContext dev
         addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
         addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
---        addData FILES OIH.historyContext [updatedData undefined]
+        addData FILES OIH.historyContext
+            $ updatedFile "data/office/office%d/image"
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

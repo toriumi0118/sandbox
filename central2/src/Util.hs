@@ -5,7 +5,6 @@ module Util
     , fromJustM
     , clientError
     , unique
-    , initIf
     , (?:)
     ) where
 
@@ -26,13 +25,6 @@ clientError = Scotty.text ""
 
 unique :: Ord a => [a] -> [a]
 unique = Set.toList . Set.fromList
-
-initIf :: (a -> Bool) -> [a] -> [a]
-initIf _ []       = []
-initIf f [a]
-    | f a         = []
-    | otherwise   = [a]
-initIf _ as@(_:_) = as
 
 (?:) :: Maybe a -> [a] -> [a]
 Nothing ?: xs = xs

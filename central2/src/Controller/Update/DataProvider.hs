@@ -6,13 +6,14 @@ module Controller.Update.DataProvider
     , getConnection
     , getHistories
     , store
-    , UpdateData (..)
+    , UpdateContent (..)
     , History
     , FileAction (..)
     , UpdateResponseKey (..)
     ) where
 
 import Control.Applicative
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader, ReaderT)
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.Trans.Class (MonadTrans, lift)
@@ -50,15 +51,23 @@ data UpdateResponseKey
     | FILE_ACtION
   deriving (Eq, Ord, Show)
 
-data UpdateData = UpdateData
-    { index :: Integer
-    , action :: FileAction
-    , table :: TableName
-    , pkColumn :: PkColumn
-    , data' :: [Value]
-    }
+data UpdateContent
+    = UpdateData
+        { index :: Integer
+        , action :: FileAction
+        , table :: TableName
+        , pkColumn :: PkColumn
+        , data_ :: [Value]
+        }
+    | UpdateOfficeFile
+        { name :: String
+        , type_ :: String
+        , action_2 :: String
+        , officeId :: Integer
+        , subDir :: String
+        }
 
-instance ToJSON UpdateData where
+instance ToJSON UpdateContent where
     toJSON (UpdateData i a t p d) = toJSON $ Map.mapKeys show $ Map.fromList
         [ (DAT_INDEX, toJSON i)
         , (DAT_ACTION, toJSON a)
@@ -66,17 +75,18 @@ instance ToJSON UpdateData where
         , (DAT_PK_COLUMN, toJSON p)
         , (DAT_DATA, toJSON d)
         ]
+    toJSON (UpdateOfficeFile i t a o s) = undefined --toJSON $ Map.mapKeys show $ Map.fromList
 
 type History = (Int32, FileAction)
 
 newtype DataProvider m a = DataProviderT
     { runDataProviderT
-        :: WriterT [Maybe [UpdateData]] (ReaderT (Connection, [History]) m) a
+        :: WriterT [Maybe [UpdateContent]] (ReaderT (Connection, [History]) m) a
     }
   deriving
-    ( Functor, Applicative, Monad
+    ( Functor, Applicative, Monad, MonadIO
     , MonadReader (Connection, [History])
-    , MonadWriter [Maybe [UpdateData]]
+    , MonadWriter [Maybe [UpdateContent]]
     )
 
 instance MonadTrans DataProvider where
@@ -84,7 +94,7 @@ instance MonadTrans DataProvider where
 
 runDataProvider
     :: (Functor m, Monad m, FromSql SqlValue a, ToJSON a)
-    => Connection -> [History] -> DataProvider m a -> m [Maybe [UpdateData]]
+    => Connection -> [History] -> DataProvider m a -> m [Maybe [UpdateContent]]
 runDataProvider conn hs
     = flip Reader.runReaderT (conn, hs) . Writer.execWriterT . runDataProviderT
 
@@ -94,5 +104,5 @@ getConnection = Reader.reader fst
 getHistories :: Monad m => DataProvider m [History]
 getHistories = Reader.reader snd
 
-store :: Monad m => [Maybe [UpdateData]] -> DataProvider m ()
+store :: Monad m => [Maybe [UpdateContent]] -> DataProvider m ()
 store = Writer.tell

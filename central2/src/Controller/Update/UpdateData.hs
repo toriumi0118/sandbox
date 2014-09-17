@@ -1,9 +1,7 @@
 {-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, GeneralizedNewtypeDeriving #-}
 
 module Controller.Update.UpdateData
-    ( UpdateData (..)
-    , History
-    , updatedData
+    ( updatedData
     ) where
 
 import Control.Applicative
@@ -18,7 +16,7 @@ import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
 
-import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, History, UpdateData(UpdateData), FileAction(..))
+import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, History, UpdateContent(UpdateData), FileAction(..))
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
@@ -40,7 +38,7 @@ deleteData :: (MonadIO m, Functor m)
     => Connection
     -> TableContext a
     -> Int32 -- ^ office id
-    -> m (Maybe [UpdateData])
+    -> m (Maybe [UpdateContent])
 deleteData conn ctx@(TableContext _ _ _ tabName keyName _ (NewsParam _ _)) oid = do
     (Just ds) <- deleteData conn ctx{param = NoParam} oid
     r1 <- f <$> Query.runQuery conn (Query.byKey NB.newsBody NB.id') (fromIntegral oid)
@@ -65,7 +63,7 @@ toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     => Connection
     -> TableContext a
     -> (History, Maybe a)
-    -> m (Maybe [UpdateData])
+    -> m (Maybe [UpdateContent])
 toUpdateData c ctx ((i, DELETE), _      ) = deleteData c ctx i
 toUpdateData c ctx ((i, UPDATE), Nothing) = deleteData c ctx i
 toUpdateData _ _   (_          , Nothing) = return Nothing

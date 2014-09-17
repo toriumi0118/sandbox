@@ -5,7 +5,6 @@ module Controller.Update
     ) where
 
 import Control.Applicative
-import Control.Arrow (second)
 import Control.Monad (when)
 import Control.Monad.Error (catchError)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -16,7 +15,7 @@ import qualified Control.Monad.State as State
 import Control.Monad.Trans.Class (lift, MonadTrans)
 import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Bifunctor (bimap)
-import Data.Int (Int32, Int64)
+import Data.Int (Int64)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -33,14 +32,14 @@ import Auth (Auth(Auth))
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES))
+import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), History)
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
 import Controller.Update.UpdateData (updatedData)
-import Controller.Update.UpdateFile (updatedFile)
+--import Controller.Update.UpdateFile (updatedFile)
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Catalog
@@ -64,14 +63,14 @@ import Util (clientError)
 history :: C.History a
     => Relation () a -- ^ テーブルのRelation
     -> Pi a Int64 -- ^ from toで指定するキー
-    -> Relation (Int64, Int64) (Int32, String)
+    -> Relation (Int64, Int64) History
 history historyRelation k = relation' $ do
     h <- query historyRelation
     (ph, ()) <- placeholder $ \range -> wheres $
         (h ! k .>. range ! fst') `and'`
         (h ! k .<. range ! snd')
     asc $ h ! C.id'
-    return (ph, (h ! C.officeId' >< h ! C.action'))
+    return (ph, (h ! C.officeId' >< read |$| h ! C.action'))
 
 -- | 指定したテーブルからfrom,toの間に更新されたエントリの
 --   office_id,actionの組のリストを取得
@@ -82,7 +81,7 @@ targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a, C.History a)
     -> VersionupHisIds -- ^ to
     -> m [History]
 targetHistories conn (HistoryContext r k' idk) from to =
-    uniq . map (second read) <$>
+    uniq <$>
         Query.runQuery conn (history r k') (curry (bimap oid oid) from to)
   where
     oid = fromIntegral . idk
@@ -133,8 +132,8 @@ contents (Auth deviceId) = do
             $ updatedData $ Table.Topic.tableContext dev
         addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
         addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
-        addData FILES OIH.historyContext
-            $ updatedFile "data/office/office%d/image"
+--        addData FILES OIH.historyContext
+--            $ updatedFile "data/office/office%d/image"
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

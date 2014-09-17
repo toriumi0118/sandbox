@@ -24,6 +24,7 @@ executable centralserver
                      , aeson
                      , bifunctors
                      , containers
+                     , directory
                      , HDBC
                      , HDBC-mysql
                      , HDBC-session

@@ -32,8 +32,6 @@ instance (ToSql q a, ToSql q b, ToSql q c, ToSql q d)
         putRecord c
         putRecord d
 
---instance (Integral a, Integral b) => ProductConstructor (a -> b) where
---    productConstructor = fromIntegral
 instance ProductConstructor (Int32 -> Int64) where
     productConstructor = fromIntegral
 instance ProductConstructor (Int64 -> Int32) where

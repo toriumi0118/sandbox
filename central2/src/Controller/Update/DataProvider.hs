@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, GeneralizedNewtypeDeriving, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Controller.Update.DataProvider
     ( DataProvider
@@ -23,8 +23,9 @@ import Data.Aeson (Value, ToJSON(toJSON))
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Data.Int (Int32)
 import qualified Data.Map as Map
-import Database.HDBC (SqlValue)
-import Database.Record (FromSql)
+import Database.HDBC (SqlValue(SqlString))
+import Database.Record.FromSql (FromSql(recordFromSql), createRecordFromSql)
+import Database.Relational.Query (ProductConstructor(..))
 
 import Controller.Update.TableContext (TableName, PkColumn)
 import DataSource (Connection)
@@ -33,6 +34,16 @@ data FileAction = INSERT | DELETE | UPDATE
   deriving (Show, Read, Eq)
 
 deriveJSON defaultOptions ''FileAction
+
+instance ProductConstructor (String -> FileAction) where
+    productConstructor = read
+
+instance FromSql SqlValue FileAction where
+    recordFromSql = createRecordFromSql f
+      where
+        f []              = error "can't convert from SqlValue to FileAction"
+        f (SqlString s:_) = (read s, [])
+        f (_:ss)          = f ss
 
 data UpdateResponseKey
     = DATA
@@ -51,6 +62,11 @@ data UpdateResponseKey
     | FILE_ACtION
   deriving (Eq, Ord, Show)
 
+data OfficeKind
+    = DAY_SERVICE
+    | SERVICE_BUILDING
+  deriving (Eq, Ord, Read, Show)
+
 data UpdateContent
     = UpdateData
         { index :: Integer
@@ -67,17 +83,27 @@ data UpdateContent
         , subDir :: String
         }
 
+toJSON' :: [(UpdateResponseKey, Value)] -> Value
+toJSON' = toJSON . Map.mapKeys show . Map.fromList
+
 instance ToJSON UpdateContent where
-    toJSON (UpdateData i a t p d) = toJSON $ Map.mapKeys show $ Map.fromList
+    toJSON (UpdateData i a t p d) = toJSON'
         [ (DAT_INDEX, toJSON i)
         , (DAT_ACTION, toJSON a)
         , (DAT_TABLE, toJSON t)
         , (DAT_PK_COLUMN, toJSON p)
         , (DAT_DATA, toJSON d)
         ]
-    toJSON (UpdateOfficeFile i t a o s) = undefined --toJSON $ Map.mapKeys show $ Map.fromList
+    toJSON (UpdateOfficeFile _ _ _ o _) = toJSON'
+        [ (OFFICE_KIND, toJSON $ show DAY_SERVICE)
+        , (OFFICE_ID, toJSON o)
+        ]
 
 type History = (Int32, FileAction)
+--data History = History Int32 FileAction
+
+--instance ProductConstructor (Int32 -> FileAction -> History) where
+--    productConstructor = History
 
 newtype DataProvider m a = DataProviderT
     { runDataProviderT

@@ -17,7 +17,7 @@ import Database.Record (FromSql)
 import qualified Safe
 
 import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, UpdateContent(UpdateData))
-import Controller.Update.HistoryContext (History(History, hOfficeId, hAction), FileAction(DELETE, UPDATE))
+import Controller.Update.HistoryContext (History(History, hOfficeId, hAction, FileHistory), FileAction(DELETE, UPDATE))
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
@@ -65,6 +65,7 @@ toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     -> TableContext a
     -> (History, Maybe a)
     -> m (Maybe [UpdateContent])
+toUpdateData _ _ ((FileHistory _ _ _), _) = fail "Unsupported file history"
 toUpdateData c ctx ((History i DELETE), _      ) = deleteData c ctx i
 toUpdateData c ctx ((History i UPDATE), Nothing) = deleteData c ctx i
 toUpdateData _ _   (_                 , Nothing) = return Nothing

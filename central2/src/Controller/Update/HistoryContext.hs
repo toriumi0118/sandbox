@@ -12,6 +12,10 @@ module Controller.Update.HistoryContext
         ( History
         , hOfficeId
         , hAction
+        , FileHistory
+        , hfOfficeId
+        , hfAction
+        , hfFileName
         )
     , FileAction
         ( INSERT
@@ -50,9 +54,16 @@ data History
         { hOfficeId :: Int32
         , hAction :: FileAction
         }
+    | FileHistory
+        { hfOfficeId :: Int32
+        , hfAction :: FileAction
+        , hfFileName :: String
+        }
 
 instance ProductConstructor (Int32 -> FileAction -> History) where
     productConstructor = History
+instance ProductConstructor (Int32 -> FileAction -> String -> History) where
+    productConstructor = FileHistory
 
 instance FromSql SqlValue History where
     recordFromSql = History <$> recordFromSql <*> recordFromSql

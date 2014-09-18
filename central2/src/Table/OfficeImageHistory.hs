@@ -8,7 +8,7 @@ import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(FileHistory))
 import DataSource (defineTable)
 
 defineTable "office_image_history"
@@ -20,4 +20,4 @@ historyContext = HistoryContext
     officeImageHistory
     id'
     V.officeImageId
-    (\h -> History |$| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> FileHistory |$| h ! officeId' |*| (read |$| h ! action') |*| h ! fileName')

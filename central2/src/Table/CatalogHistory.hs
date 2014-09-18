@@ -1,24 +1,23 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
-{-# OPTIONS_GHC -fno-warn-missing-methods #-}
 
 module Table.CatalogHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
+import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
-import Controller.Types.Class (History)
+import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
 import DataSource (defineTable)
 
 defineTable "catalog_history"
 
 deriveJSON defaultOptions ''CatalogHistory
 
-instance History CatalogHistory
-
 historyContext :: HistoryContext CatalogHistory
 historyContext = HistoryContext
     catalogHistory
     id'
     V.catalogId
+    (\h -> History |$| h ! catalogId' |*| (read |$| h ! action'))

@@ -16,7 +16,8 @@ import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
 
-import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, History(History, hOfficeId, hAction), UpdateContent(UpdateData), FileAction(..))
+import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, UpdateContent(UpdateData))
+import Controller.Update.HistoryContext (History(History, hOfficeId, hAction), FileAction(DELETE, UPDATE))
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query

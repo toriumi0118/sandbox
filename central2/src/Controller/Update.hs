@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, TemplateHaskell, RankNTypes #-}
+{-# LANGUAGE FlexibleContexts, RankNTypes #-}
 
 module Controller.Update
     ( contents
@@ -29,11 +29,10 @@ import qualified Web.Scotty.Internal.Types as Scotty
 import Web.Scotty.Binding.Play (parseParams)
 
 import Auth (Auth(Auth))
-import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), History(History, hOfficeId))
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
+import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext, hcPk, hcSelect), History(hOfficeId))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
@@ -50,7 +49,7 @@ import qualified Table.NewsHead
 import qualified Table.OfficeAdHistory as OAH
 import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
-import qualified Table.OfficeImageHistory as OIH
+--import qualified Table.OfficeImageHistory as OIH
 import qualified Table.OfficePdf
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
@@ -60,29 +59,29 @@ import Util (clientError)
 
 -- | from-toからoffice_idとactionのセットを取得するSQL
 --   古い順にソート
-history :: C.History a
-    => Relation () a -- ^ テーブルのRelation
+history
+    :: HistoryContext a
+    -> Relation () a -- ^ テーブルのRelation
     -> Pi a Int64 -- ^ from toで指定するキー
     -> Relation (Int64, Int64) History
-history historyRelation k = relation' $ do
+history hc historyRelation k = relation' $ do
     h <- query historyRelation
     (ph, ()) <- placeholder $ \range -> wheres $
         (h ! k .>. range ! fst') `and'`
         (h ! k .<. range ! snd')
-    asc $ h ! C.id'
-    return (ph, History |$| h ! C.officeId' |*| (read |$| h ! C.action'))
+    asc $ h ! hcPk hc
+    return (ph, (hcSelect hc) h)
 
 -- | 指定したテーブルからfrom,toの間に更新されたエントリの
 --   office_id,actionの組のリストを取得
-targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a, C.History a)
+targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a)
     => Connection
     -> HistoryContext a
     -> VersionupHisIds -- ^ from
     -> VersionupHisIds -- ^ to
     -> m [History]
-targetHistories conn (HistoryContext r k' idk) from to =
-    uniq <$>
-        Query.runQuery conn (history r k') (curry (bimap oid oid) from to)
+targetHistories conn ctx@(HistoryContext r k' idk _) from to = uniq <$>
+    Query.runQuery conn (history ctx r k') (curry (bimap oid oid) from to)
   where
     oid = fromIntegral . idk
     uniq = Map.elems . flip State.execState Map.empty . uniq'
@@ -98,7 +97,7 @@ version = do
     return (from, to)
 
 addData
-    :: (MonadIO m, Functor m, C.History a, FromSql SqlValue a,
+    :: (MonadIO m, Functor m, FromSql SqlValue a,
         MonadTrans t, MonadState (Map String [Value]) (t m),
         MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
     => UpdateResponseKey

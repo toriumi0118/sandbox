@@ -1,24 +1,23 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
-{-# OPTIONS_GHC -fno-warn-missing-methods #-}
 
 module Table.PdfDocHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
+import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
-import Controller.Types.Class (History)
+import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
 import DataSource (defineTable)
 
 defineTable "pdf_doc_history"
 
 deriveJSON defaultOptions ''PdfDocHistory
 
-instance History PdfDocHistory
-
 historyContext :: HistoryContext PdfDocHistory
 historyContext = HistoryContext
     pdfDocHistory
     id'
     V.pdfDocId
+    (\h -> History |$| h ! pdfDocId' |*| (read |$| h ! action'))

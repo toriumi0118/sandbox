@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, FlexibleContexts, RankNTypes, GeneralizedNewtypeDeriving, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, RankNTypes, GeneralizedNewtypeDeriving #-}
 
 module Controller.Update.DataProvider
     ( DataProvider
@@ -7,8 +7,6 @@ module Controller.Update.DataProvider
     , getHistories
     , store
     , UpdateContent (..)
-    , History(..)
-    , FileAction (..)
     , UpdateResponseKey (..)
     ) where
 
@@ -20,30 +18,13 @@ import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Writer (MonadWriter, WriterT)
 import qualified Control.Monad.Writer as Writer
 import Data.Aeson (Value, ToJSON(toJSON))
-import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Data.Int (Int32)
 import qualified Data.Map as Map
-import Database.HDBC (SqlValue(SqlString))
-import Database.Record.FromSql (FromSql(recordFromSql), createRecordFromSql)
-import Database.Relational.Query (ProductConstructor(..))
+import Database.HDBC (SqlValue)
+import Database.Record (FromSql)
 
+import Controller.Update.HistoryContext (History, FileAction)
 import Controller.Update.TableContext (TableName, PkColumn)
 import DataSource (Connection)
-
-data FileAction = INSERT | DELETE | UPDATE
-  deriving (Show, Read, Eq)
-
-deriveJSON defaultOptions ''FileAction
-
-instance ProductConstructor (String -> FileAction) where
-    productConstructor = read
-
-instance FromSql SqlValue FileAction where
-    recordFromSql = createRecordFromSql f
-      where
-        f []              = error "can't convert from SqlValue to FileAction"
-        f (SqlString s:_) = (read s, [])
-        f (_:ss)          = f ss
 
 data UpdateResponseKey
     = DATA
@@ -98,18 +79,6 @@ instance ToJSON UpdateContent where
         [ (OFFICE_KIND, toJSON $ show DAY_SERVICE)
         , (OFFICE_ID, toJSON o)
         ]
-
-data History
-    = History
-        { hOfficeId :: Int32
-        , hAction :: FileAction
-        }
-
-instance ProductConstructor (Int32 -> FileAction -> History) where
-    productConstructor = History
-
-instance FromSql SqlValue History where
-    recordFromSql = History <$> recordFromSql <*> recordFromSql
 
 newtype DataProvider m a = DataProviderT
     { runDataProviderT

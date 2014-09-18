@@ -15,12 +15,6 @@ instance FromJSON NominalDiffTime where
 instance ToJSON NominalDiffTime where
     toJSON = toJSON . flip addUTCTime (UTCTime (ModifiedJulianDay 0) 0)
 
-class History a where
-    action :: a -> String
-    id' :: Pi a Int64
-    officeId' :: Pi a Int32
-    action' :: Pi a String
-
 instance ProductConstructor (a -> b -> c -> d -> (a, b, c, d)) where
     productConstructor = (,,,)
 

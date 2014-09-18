@@ -7,7 +7,7 @@ module Controller.Update.DataProvider
     , getHistories
     , store
     , UpdateContent (..)
-    , History
+    , History(..)
     , FileAction (..)
     , UpdateResponseKey (..)
     ) where
@@ -99,11 +99,17 @@ instance ToJSON UpdateContent where
         , (OFFICE_ID, toJSON o)
         ]
 
-type History = (Int32, FileAction)
---data History = History Int32 FileAction
+data History
+    = History
+        { hOfficeId :: Int32
+        , hAction :: FileAction
+        }
 
---instance ProductConstructor (Int32 -> FileAction -> History) where
---    productConstructor = History
+instance ProductConstructor (Int32 -> FileAction -> History) where
+    productConstructor = History
+
+instance FromSql SqlValue History where
+    recordFromSql = History <$> recordFromSql <*> recordFromSql
 
 newtype DataProvider m a = DataProviderT
     { runDataProviderT

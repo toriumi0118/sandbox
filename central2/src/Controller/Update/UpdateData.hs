@@ -16,7 +16,7 @@ import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
 
-import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, History, UpdateContent(UpdateData), FileAction(..))
+import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, History(History, hOfficeId, hAction), UpdateContent(UpdateData), FileAction(..))
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
@@ -31,7 +31,7 @@ classify :: (a -> Int32) -> [History] -> [a]
 classify _ []     _      = []
 classify k (h:hs) []     = (h, Nothing):classify k hs []
 classify k (h:hs) (o:os)
-    | fst h == k o       = (h, Just o):classify k hs os
+    | hOfficeId h == k o = (h, Just o):classify k hs os
     | otherwise          = (h, Nothing):classify k hs (o:os)
 
 deleteData :: (MonadIO m, Functor m)
@@ -64,10 +64,10 @@ toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     -> TableContext a
     -> (History, Maybe a)
     -> m (Maybe [UpdateContent])
-toUpdateData c ctx ((i, DELETE), _      ) = deleteData c ctx i
-toUpdateData c ctx ((i, UPDATE), Nothing) = deleteData c ctx i
-toUpdateData _ _   (_          , Nothing) = return Nothing
-toUpdateData _ (TableContext _ k _ t pk fs _) ((_, act), Just o) =
+toUpdateData c ctx ((History i DELETE), _      ) = deleteData c ctx i
+toUpdateData c ctx ((History i UPDATE), Nothing) = deleteData c ctx i
+toUpdateData _ _   (_                 , Nothing) = return Nothing
+toUpdateData _ (TableContext _ k _ t pk fs _) ((History _ act), Just o) =
     return $ Just $ (:[]) $ UpdateData
         (fromIntegral $ k o)
         act
@@ -94,20 +94,20 @@ updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => TableContext a -> DataProvider m ()
 updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
     hs <- getHistories
-    let (del1, oth) = partition ((==) DELETE . snd) hs
+    let (del1, oth) = partition ((==) DELETE . hAction) hs
     conn <- getConnection
     (del2, os) <- lift $ partition (isJust . snd) . classify k oth <$> case mp of
         NewsParam p' p -> liftIO p >>=
-            Query.runQuery conn (Query.inList p' k' $ map fst oth)
+            Query.runQuery conn (Query.inList p' k' $ map hOfficeId oth)
         TopicParam Nothing  _ ->
-            Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+            Query.runQuery conn (Query.inList rel k' $ map hOfficeId oth) ()
         TopicParam (Just d) f -> do
-            as <- Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+            as <- Query.runQuery conn (Query.inList rel k' $ map hOfficeId oth) ()
             when (null as) $ fail "Topics are not exist."
             filterM (f conn $ pos K.latitude K.longitude <$> getKyotaku conn d) as
         NoParam ->
-            Query.runQuery conn (Query.inList rel k' $ map fst oth) ()
+            Query.runQuery conn (Query.inList rel k' $ map hOfficeId oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
-            ++ map (\((i, _), _) -> ((i, DELETE), Nothing)) del2
+            ++ map (\((History i _), _) -> ((History i DELETE), Nothing)) del2
     lift (mapM (toUpdateData conn ctx) os') >>= store

@@ -32,7 +32,7 @@ import Auth (Auth(Auth))
 import qualified Controller.Types.Class as C
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), History)
+import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), History(History, hOfficeId))
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext))
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
@@ -70,7 +70,7 @@ history historyRelation k = relation' $ do
         (h ! k .>. range ! fst') `and'`
         (h ! k .<. range ! snd')
     asc $ h ! C.id'
-    return (ph, (h ! C.officeId' >< read |$| h ! C.action'))
+    return (ph, History |$| h ! C.officeId' |*| (read |$| h ! C.action'))
 
 -- | 指定したテーブルからfrom,toの間に更新されたエントリの
 --   office_id,actionの組のリストを取得
@@ -86,8 +86,8 @@ targetHistories conn (HistoryContext r k' idk) from to =
   where
     oid = fromIntegral . idk
     uniq = Map.elems . flip State.execState Map.empty . uniq'
-    uniq' []            = return ()
-    uniq' (h@(i, _):hs) = State.modify (Map.insert i h) >> uniq' hs
+    uniq' []     = return ()
+    uniq' (h:hs) = State.modify (Map.insert (hOfficeId h) h) >> uniq' hs
 
 version :: ActionM (VersionupHisIds, VersionupHisIds)
 version = do

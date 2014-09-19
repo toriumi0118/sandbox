@@ -7,10 +7,10 @@ import os
 cssDir = "./css/"
 imgDir = "./img/"
 
-officesDir = "/home/wellmotion/centralserver/data/office/"
+
 
 mainGui = Tk()
-mainGui.resizable(0,0)
+#mainGui.resizable(0,0)
 
 serverAddress = StringVar()
 serverPort = StringVar()
@@ -21,21 +21,34 @@ databaseUser = StringVar()
 databaseName = StringVar()
 databasePassword = StringVar()
 
-
-serverAddress.set('133.242.17.206')
-serverPort.set('10044')
-serverUsername.set('welmo')
-serverPassword.set('')
-
-databaseUser.set("prod")
-databaseName.set("release")
-databasePassword.set("")
-
-
-
+officesDir = StringVar()
 
 uploaderName = "presen_tool"
 
+
+def settingsToTaurus():
+    serverAddress.set('133.242.17.206')
+    serverPort.set('10044')
+    serverUsername.set('welmo')
+    serverPassword.set('')
+
+    officesDir.set("/home/wellmotion/centralserver/data/office/")
+
+    databaseUser.set("prod")
+    databaseName.set("release")
+    databasePassword.set("")
+
+def settingsToAries():
+    serverAddress.set('133.242.18.214')
+    serverPort.set('54649')
+    serverUsername.set('wellmotion')
+    serverPassword.set('')
+
+    officesDir.set("/home/welmo/release/centralserver/data/office/")
+
+    databaseUser.set("devusr")
+    databaseName.set("dev")
+    databasePassword.set("")
 
 
 def getConnection():
@@ -181,6 +194,22 @@ separator.pack(fill=X, padx=5, pady=5)
 
 Label(text="Settings").pack()
 
+serverValue = IntVar()
+f = Frame()
+Radiobutton(f, text="Taurus", variable=serverValue,command = settingsToTaurus, value=1).pack(side=LEFT)
+Radiobutton(f, text="Aries", variable=serverValue,command = settingsToAries, value=2).pack(side=RIGHT)
+f.pack()
+
+
+separator = Frame(height=2, bd=1, relief=SUNKEN)
+separator.pack(fill=X, padx=5, pady=5)
+
+f = Frame()
+Label(f,text="Offices Path").pack(side=LEFT)
+officesDirEntry = Entry(f,textvariable=officesDir,width=60)
+officesDirEntry.pack(side=LEFT,fill=X,expand=1)
+f.pack(fill=X,expand=1)
+
 separator = Frame(height=2, bd=1, relief=SUNKEN)
 separator.pack(fill=X, padx=5, pady=5)
 
@@ -230,6 +259,7 @@ Label(f,text="Database Password").pack(side=LEFT)
 databasePasswordEntry = Entry(f,textvariable=databasePassword,show="*")
 databasePasswordEntry.pack(side=LEFT)
 f.pack()
+
 
 
 

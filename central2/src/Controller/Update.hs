@@ -50,6 +50,7 @@ import qualified Table.OfficeCaseHistory as OCH
 import qualified Table.OfficeHistory as OH
 import qualified Table.OfficeImageHistory as OIH
 import qualified Table.OfficePdf
+import qualified Table.OfficePresentationHistory as OPH
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
 import qualified Table.TopicHistory as TH
@@ -129,6 +130,8 @@ contents (Auth deviceId) = do
         addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
         addData FILES OIH.historyContext
             $ updatedFile "data/office/office%d/image"
+        addData FILES OPH.historyContext
+            $ updatedFile "data/office/office%d/presentation"
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

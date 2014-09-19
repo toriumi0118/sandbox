@@ -20,6 +20,6 @@ historyContext = HistoryContext
     officeCaseHistory
     id'
     V.officeCaseId
-    (\h -> History |$| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> History |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action'))
 
 -- officePdfId

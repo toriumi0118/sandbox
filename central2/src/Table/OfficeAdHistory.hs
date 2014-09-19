@@ -20,4 +20,4 @@ historyContext = HistoryContext
     officeAdHistory
     id'
     V.officeAdId
-    (\h -> History |$| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> History |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action'))

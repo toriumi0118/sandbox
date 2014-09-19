@@ -20,4 +20,4 @@ historyContext = HistoryContext
     pdfDocHistory
     id'
     V.pdfDocId
-    (\h -> History |$| h ! pdfDocId' |*| (read |$| h ! action'))
+    (\h -> History |$| h ! id' |*| h ! pdfDocId' |*| (read |$| h ! action'))

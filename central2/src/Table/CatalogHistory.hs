@@ -20,4 +20,4 @@ historyContext = HistoryContext
     catalogHistory
     id'
     V.catalogId
-    (\h -> History |$| h ! catalogId' |*| (read |$| h ! action'))
+    (\h -> History |$| h ! id' |*| h ! catalogId' |*| (read |$| h ! action'))

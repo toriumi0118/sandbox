@@ -10,13 +10,15 @@ module Controller.Update.HistoryContext
         )
     , History
         ( History
-        , hOfficeId
+        , hTargetId
         , hAction
         , FileHistory
-        , hfOfficeId
+        , hfTargetId
         , hfAction
         , hfFileName
         )
+    , targetId
+    , order
     , FileAction
         ( INSERT
         , DELETE
@@ -35,7 +37,7 @@ import Database.Relational.Query
 import Controller.Types.VersionupHisIds (VersionupHisIds)
 
 data FileAction = INSERT | DELETE | UPDATE
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 deriveJSON defaultOptions ''FileAction
 
@@ -51,22 +53,44 @@ instance FromSql SqlValue FileAction where
 
 data History
     = History
-        { hOfficeId :: Int32
+        { hOrder :: Int64
+        , hTargetId :: Int32
         , hAction :: FileAction
         }
     | FileHistory
-        { hfOfficeId :: Int32
+        { hfOrder :: Int64
+        , hfTargetId :: Int32
         , hfAction :: FileAction
         , hfFileName :: String
         }
 
-instance ProductConstructor (Int32 -> FileAction -> History) where
+instance Eq History where
+    History _ i1 _ == History _ i2 _ = i1 == i2
+    FileHistory _ i1 _ _ == FileHistory _ i2 _ _ = i1 == i2
+    _ == _ = False
+
+instance Ord History where
+    History _ i1 _ <= History _ i2 _ = i1 <= i2
+    FileHistory _ i1 _ _ <= FileHistory _ i2 _ _ = i1 <= i2
+    History _ _ _ <= FileHistory _ _ _ _ = True
+    _ <= _ = False
+
+instance ProductConstructor (Int64 -> Int32 -> FileAction -> History) where
     productConstructor = History
-instance ProductConstructor (Int32 -> FileAction -> String -> History) where
+
+instance ProductConstructor (Int64 -> Int32 -> FileAction -> String -> History) where
     productConstructor = FileHistory
 
 instance FromSql SqlValue History where
-    recordFromSql = History <$> recordFromSql <*> recordFromSql
+    recordFromSql = History <$> recordFromSql <*> recordFromSql <*> recordFromSql
+
+targetId :: History -> Int32
+targetId (History _ i _)       = i
+targetId (FileHistory _ i _ _) = i
+
+order :: History -> Int64
+order (History i _ _) = i
+order (FileHistory i _ _ _) = i
 
 data HistoryContext a = HistoryContext
     { hcRel :: Relation () a

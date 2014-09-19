@@ -20,4 +20,4 @@ historyContext = HistoryContext
     serviceBuildingHistory
     id'
     V.serviceBuildingId
-    (\h -> History |$| h ! sbId' |*| (read |$| h ! action'))
+    (\h -> History |$| h ! id' |*| h ! sbId' |*| (read |$| h ! action'))

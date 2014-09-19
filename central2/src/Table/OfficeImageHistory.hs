@@ -20,4 +20,4 @@ historyContext = HistoryContext
     officeImageHistory
     id'
     V.officeImageId
-    (\h -> FileHistory |$| h ! officeId' |*| (read |$| h ! action') |*| h ! fileName')
+    (\h -> FileHistory |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action') |*| h ! fileName')

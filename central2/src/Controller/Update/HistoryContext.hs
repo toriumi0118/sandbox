@@ -19,6 +19,7 @@ module Controller.Update.HistoryContext
         )
     , targetId
     , order
+    , action
     , FileAction
         ( INSERT
         , DELETE
@@ -91,6 +92,10 @@ targetId (FileHistory _ i _ _) = i
 order :: History -> Int64
 order (History i _ _) = i
 order (FileHistory i _ _ _) = i
+
+action :: History -> FileAction
+action (History _ _ a) = a
+action (FileHistory _ _ a _) = a
 
 data HistoryContext a = HistoryContext
     { hcRel :: Relation () a

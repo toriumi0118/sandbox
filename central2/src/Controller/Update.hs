@@ -37,7 +37,7 @@ import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
 import Controller.Update.UpdateData (updatedData)
-import Controller.Update.UpdateFile (updatedFile)
+import Controller.Update.UpdateFile (updatedFile, FileProviderType(OfficeImage, OfficePresentation))
 import DataSource (Connection)
 import qualified Query
 import qualified Table.Catalog
@@ -128,10 +128,8 @@ contents (Auth deviceId) = do
             $ updatedData $ Table.Topic.tableContext dev
         addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
         addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
-        addData FILES OIH.historyContext
-            $ updatedFile "data/office/office%d/image"
-        addData FILES OPH.historyContext
-            $ updatedFile "data/office/office%d/presentation"
+        addData FILES OIH.historyContext $ updatedFile OfficeImage
+        addData FILES OPH.historyContext $ updatedFile OfficePresentation
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

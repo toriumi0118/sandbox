@@ -1,10 +1,5 @@
 module Controller.Update.UpdateFile
     ( updatedFile
-    , FileProviderType
-        ( OfficeImage
-        , OfficePresentation
-        , OfficeAd
-        )
     ) where
 
 import Control.Applicative
@@ -15,25 +10,23 @@ import Data.Maybe (catMaybes)
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Text.Printf (printf)
 
-import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile), FileType(IMAGE, PRESENTATION), HistoryId, store)
+import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile), FileType(IMAGE, PRESENTATION, AD), HistoryId, store)
 import Controller.Update.HistoryContext (History(History, FileHistory, hfFileName), FileAction(DELETE, UPDATE), targetId, action)
 
-data FileProviderType = OfficeImage | OfficePresentation | OfficeAd
-
 createUpdateContent
-    :: FileProviderType -> FilePath -> History -> Maybe (HistoryId, UpdateContent)
-createUpdateContent OfficeImage path (FileHistory hid i a n) = Just
-    (hid, UpdateOfficeFile n IMAGE a (fromIntegral i) path)
-createUpdateContent OfficePresentation _ (History hid i DELETE) = Just
+    :: FileType -> FilePath -> History -> Maybe (HistoryId, UpdateContent)
+createUpdateContent PRESENTATION _ (History hid i DELETE) = Just
     (hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")
-createUpdateContent OfficePresentation _ (History hid i UPDATE) = Just
+createUpdateContent PRESENTATION _ (History hid i UPDATE) = Just
     (hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")
-createUpdateContent OfficePresentation path (History hid i act) = Just
+createUpdateContent PRESENTATION path (History hid i act) = Just
     (hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")
+createUpdateContent typ path (FileHistory hid i a n) = Just
+    (hid, UpdateOfficeFile n typ a (fromIntegral i) path)
 createUpdateContent _ _ _ = Nothing
 
 deleteAction
-    :: FileProviderType
+    :: FileType
     -> [(FilePath, History)]
     -> ([(FilePath, History)], [(HistoryId, UpdateContent)])
 deleteAction t = go [] []
@@ -44,10 +37,10 @@ deleteAction t = go [] []
         go rs (createUpdateContent t path h:cs) hs
     go rs cs (h:hs)                                    = go (h:rs) cs hs
 
-filePathFormat :: FileProviderType -> String
-filePathFormat OfficeImage = "data/office/office%d/image"
-filePathFormat OfficePresentation = "data/office/office%d/presentation"
-filePathFormat OfficeAd = "data/office/office%d/ad"
+filePathFormat :: FileType -> String
+filePathFormat IMAGE = "data/office/office%d/image"
+filePathFormat PRESENTATION = "data/office/office%d/presentation"
+filePathFormat AD = "data/office/office%d/ad"
 
 data FileOrDirectory = NotExist | File | Directory deriving (Eq)
 
@@ -66,9 +59,8 @@ checkFileOrDirectory path = liftIO (doesFileExist path) >>= bool
     (return File) 
     (bool Directory NotExist <$> liftIO (doesDirectoryExist path))
 
-updatedFile
-    :: (Applicative m, MonadIO m) => FileProviderType -> DataProvider m ()
-updatedFile t@OfficePresentation = do
+updatedFile :: (Applicative m, MonadIO m) => FileType -> DataProvider m ()
+updatedFile t@PRESENTATION = do
     fhs <- map ((,) <$> subDir <*> id) <$> getHistories
     let (hs, uc) = deleteAction t fhs
     store uc

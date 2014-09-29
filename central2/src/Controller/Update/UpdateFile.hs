@@ -38,8 +38,11 @@ deleteAction t = go [] []
         go rs (createUpdateContent t path h:cs) hs
     go rs cs (h:hs)                                    = go (h:rs) cs hs
 
-filePathFormat :: FileType -> String
-filePathFormat typ = "data/office/office%d/" ++ map toLower (show typ)
+filePath :: FileType -> History -> FilePath
+filePath TOPIC = const "data/topic"
+filePath typ
+    = printf ("data/office/office%d/" ++ map toLower (show typ))
+    . targetId
 
 data FileOrDirectory = NotExist | File | Directory deriving (Eq)
 
@@ -60,7 +63,7 @@ checkFileOrDirectory path = liftIO (doesFileExist path) >>= bool
 
 updatedFile :: (Applicative m, MonadIO m) => FileType -> DataProvider m ()
 updatedFile t@PRESENTATION = do
-    fhs <- map ((,) <$> subDir <*> id) <$> getHistories
+    fhs <- map ((,) <$> filePath t <*> id) <$> getHistories
     let (hs, uc) = deleteAction t fhs
     store uc
     store
@@ -70,7 +73,6 @@ updatedFile t@PRESENTATION = do
     -- XXX: includePath
     mapM checkFile fhs >>= mapM_ g
   where
-    subDir =  printf (filePathFormat t) . targetId
     isUpdate (_, h) = action h == UPDATE
     checkFile fh = (,) <$> checkFileOrDirectory (fst fh) <*> return fh
     g (NotExist, (path, _)) = fail $ "Update file not found: " ++ path
@@ -81,12 +83,12 @@ updatedFile t@PRESENTATION = do
         cs <- liftIO $ getDirectoryContents path
         mapM_ (\c -> checkFile (c, h) >>= g) cs
 updatedFile t = do
-    (hs, uc) <- deleteAction t . map ((,) <$> subDir <*> id) <$> getHistories
+    (hs, uc) <- deleteAction t . map ((,) <$> filePath t <*> id)
+        <$> getHistories
     store uc
     mapM_ checkFile $ map (\(dir, h) -> dir ++ "/" ++ hfFileName h) hs
     store $ catMaybes $ map (uncurry $ createUpdateContent t) hs
   where
-    subDir =  printf (filePathFormat t) . targetId
     checkFile file = checkFileOrDirectory file >>= fileOrDir
         (return ())
         (fail $ "Update file not found: " ++ file)

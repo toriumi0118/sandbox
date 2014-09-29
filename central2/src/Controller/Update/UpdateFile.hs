@@ -4,13 +4,14 @@ module Controller.Update.UpdateFile
 
 import Control.Applicative
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Char (toLower)
 import Data.Foldable (toList)
 import Data.List (isInfixOf)
 import Data.Maybe (catMaybes)
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Text.Printf (printf)
 
-import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile), FileType(IMAGE, PRESENTATION, AD), HistoryId, store)
+import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile), FileType(..), HistoryId, store)
 import Controller.Update.HistoryContext (History(History, FileHistory, hfFileName), FileAction(DELETE, UPDATE), targetId, action)
 
 createUpdateContent
@@ -38,9 +39,7 @@ deleteAction t = go [] []
     go rs cs (h:hs)                                    = go (h:rs) cs hs
 
 filePathFormat :: FileType -> String
-filePathFormat IMAGE = "data/office/office%d/image"
-filePathFormat PRESENTATION = "data/office/office%d/presentation"
-filePathFormat AD = "data/office/office%d/ad"
+filePathFormat typ = "data/office/office%d/" ++ map toLower (show typ)
 
 data FileOrDirectory = NotExist | File | Directory deriving (Eq)
 

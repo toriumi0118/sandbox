@@ -1,6 +1,10 @@
 module Controller.Update.UpdateFile
     ( updatedFile
-    , FileProviderType (OfficeImage, OfficePresentation)
+    , FileProviderType
+        ( OfficeImage
+        , OfficePresentation
+        , OfficeAd
+        )
     ) where
 
 import Control.Applicative
@@ -14,7 +18,7 @@ import Text.Printf (printf)
 import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile), FileType(IMAGE, PRESENTATION), HistoryId, store)
 import Controller.Update.HistoryContext (History(History, FileHistory, hfFileName), FileAction(DELETE, UPDATE), targetId, action)
 
-data FileProviderType = OfficeImage | OfficePresentation
+data FileProviderType = OfficeImage | OfficePresentation | OfficeAd
 
 createUpdateContent
     :: FileProviderType -> FilePath -> History -> Maybe (HistoryId, UpdateContent)
@@ -43,6 +47,7 @@ deleteAction t = go [] []
 filePathFormat :: FileProviderType -> String
 filePathFormat OfficeImage = "data/office/office%d/image"
 filePathFormat OfficePresentation = "data/office/office%d/presentation"
+filePathFormat OfficeAd = "data/office/office%d/ad"
 
 data FileOrDirectory = NotExist | File | Directory deriving (Eq)
 
@@ -63,17 +68,6 @@ checkFileOrDirectory path = liftIO (doesFileExist path) >>= bool
 
 updatedFile
     :: (Applicative m, MonadIO m) => FileProviderType -> DataProvider m ()
-updatedFile t@OfficeImage = do
-    (hs, uc) <- deleteAction t . map ((,) <$> subDir <*> id) <$> getHistories
-    store uc
-    mapM_ checkFile $ map (\(dir, h) -> dir ++ "/" ++ hfFileName h) hs
-    store $ catMaybes $ map (uncurry $ createUpdateContent t) hs
-  where
-    subDir =  printf (filePathFormat t) . targetId
-    checkFile file = checkFileOrDirectory file >>= fileOrDir
-        (return ())
-        (fail $ "Update file not found: " ++ file)
-        (return ())
 updatedFile t@OfficePresentation = do
     fhs <- map ((,) <$> subDir <*> id) <$> getHistories
     let (hs, uc) = deleteAction t fhs
@@ -95,3 +89,14 @@ updatedFile t@OfficePresentation = do
     g (Directory, (path, h)) = do
         cs <- liftIO $ getDirectoryContents path
         mapM_ (\c -> checkFile (c, h) >>= g) cs
+updatedFile t = do
+    (hs, uc) <- deleteAction t . map ((,) <$> subDir <*> id) <$> getHistories
+    store uc
+    mapM_ checkFile $ map (\(dir, h) -> dir ++ "/" ++ hfFileName h) hs
+    store $ catMaybes $ map (uncurry $ createUpdateContent t) hs
+  where
+    subDir =  printf (filePathFormat t) . targetId
+    checkFile file = checkFileOrDirectory file >>= fileOrDir
+        (return ())
+        (fail $ "Update file not found: " ++ file)
+        (return ())

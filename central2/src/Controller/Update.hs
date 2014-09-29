@@ -30,7 +30,7 @@ import Web.Scotty.Binding.Play (parseParams)
 import Auth (Auth(Auth))
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
-import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), FileType(IMAGE, PRESENTATION, AD))
+import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), FileType(IMAGE, PRESENTATION, AD, CASE))
 import Controller.Update.HistoryContext (HistoryContext(HistoryContext, hcPk, hcSelect), History)
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
@@ -131,6 +131,7 @@ contents (Auth deviceId) = do
         addData FILES OIH.historyContext $ updatedFile IMAGE
         addData FILES OPH.historyContext $ updatedFile PRESENTATION
         addData FILES OAH.historyContext $ updatedFile AD
+        addData FILES OCH.historyContext $ updatedFile CASE
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

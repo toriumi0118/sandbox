@@ -26,7 +26,7 @@ import qualified Data.Map as Map
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 
-import Controller.Update.HistoryContext (History, FileAction)
+import Controller.Update.HistoryContext (History, FileAction(DELETE))
 import Controller.Update.TableContext (TableName, PkColumn)
 import DataSource (Connection)
 import qualified Util
@@ -45,7 +45,7 @@ data UpdateResponseKey
     | FILE_NAME
     | FILE_URL
     | FILE_TYPE
-    | FILE_ACtION
+    | FILE_ACTION
   deriving (Eq, Ord, Show)
 
 data OfficeKind
@@ -76,21 +76,30 @@ data UpdateContent
         , officeId :: Integer
         , subDir :: String
         }
+    | UpdatePdfDoc
+        { name_2 :: String
+        , type_2 :: FileType
+        , action_3 :: FileAction
+        }
 
 instance Eq UpdateContent where
     (UpdateData i1 a1 t1 _ _) == (UpdateData i2 a2 t2 _ _) =
         i1 == i2 && a1 == a2 && t1 == t2
     (UpdateOfficeFile n1 t1 _ i1 s1) == (UpdateOfficeFile n2 t2 _ i2 s2) =
         n1 == n2 && t1 == t2 && i1 == i2 && s1 == s2
+    (UpdatePdfDoc n1 t1 _) == (UpdatePdfDoc n2 t2 _) = n1 == n2 && t1 == t2
     _ == _ = False
 
 instance Ord UpdateContent where
-    (UpdateData _ _ _ _ _) <= (UpdateOfficeFile _ _ _ _ _) = True
-    (UpdateOfficeFile _ _ _ _ _) <= (UpdateData _ _ _ _ _) = False
     (UpdateData i1 a1 t1 _ _) <= (UpdateData i2 a2 t2 _ _) =
         i1 <= i2 && a1 <= a2 && t1 <= t2
     (UpdateOfficeFile n1 t1 _ i1 s1) <= (UpdateOfficeFile n2 t2 _ i2 s2) =
         n1 <= n2 && t1 <= t2 && i1 <= i2 && s1 <= s2
+    (UpdatePdfDoc n1 t1 _) <= (UpdatePdfDoc n2 t2 _) = n1 <= n2 && t1 <= t2
+    (UpdateData _ _ _ _ _) <= _ = True
+    _ <= (UpdateData _ _ _ _ _) = False
+    _ <= (UpdatePdfDoc _ _ _) = True
+    (UpdatePdfDoc _ _ _) <= _ = False
 
 toJSON' :: [(UpdateResponseKey, Value)] -> Value
 toJSON' = toJSON . Map.mapKeys show . Map.fromList
@@ -106,6 +115,14 @@ instance ToJSON UpdateContent where
     toJSON (UpdateOfficeFile _ _ _ o _) = toJSON'
         [ (OFFICE_KIND, toJSON $ show DAY_SERVICE)
         , (OFFICE_ID, toJSON o)
+        ]
+    toJSON (UpdatePdfDoc n t a) = toJSON'
+        [ (FILE_NAME, toJSON n)
+        , (FILE_TYPE, toJSON t)
+        , (FILE_URL, toJSON (if a == DELETE
+            then ""
+            else ("/dataupdate/updatefile/pdfdoc?fineName=" ++ n)))
+        , (FILE_ACTION, toJSON a)
         ]
 
 type HistoryId = Int64

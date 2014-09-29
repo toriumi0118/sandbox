@@ -96,15 +96,10 @@ getKyotaku conn devId =
       . join
       . fmap D.kyotakuId
 
-historyFilter :: [History] -> [History]
-historyFilter []                     = []
-historyFilter (FileHistory _ _ _ _:hs) = historyFilter hs
-historyFilter (h:hs)                 = h:historyFilter hs
-
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => TableContext a -> DataProvider m ()
 updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
-    hs <- historyFilter <$> getHistories
+    hs <- map convHis <$> getHistories
     let (del1, oth) = partition ((==) DELETE . hAction) hs
     conn <- getConnection
     (del2, os) <- lift $ partition (isJust . snd) . classify k oth <$> case mp of
@@ -122,3 +117,6 @@ updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((History o i _), _) -> ((History o i DELETE), Nothing)) del2
     lift (concat <$> mapM (toUpdateData conn ctx) os') >>= store
+  where
+    convHis (FileHistory i t a _) = History i t a
+    convHis h@(History _ _ _) = h

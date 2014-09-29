@@ -8,7 +8,7 @@ import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(FileHistory))
 import DataSource (defineTable)
 
 defineTable "pdf_doc_history"
@@ -20,4 +20,4 @@ historyContext = HistoryContext
     pdfDocHistory
     id'
     V.pdfDocId
-    (\h -> History |$| h ! id' |*| h ! pdfDocId' |*| (read |$| h ! action'))
+    (\h -> FileHistory |$| h ! id' |*| h ! pdfDocId' |*| (read |$| h ! action') |*| h ! filePath')

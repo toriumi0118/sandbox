@@ -20,6 +20,7 @@ module Controller.Update.HistoryContext
     , targetId
     , order
     , action
+    , filename
     , FileAction
         ( INSERT
         , DELETE
@@ -96,6 +97,10 @@ order (FileHistory i _ _ _) = i
 action :: History -> FileAction
 action (History _ _ a) = a
 action (FileHistory _ _ a _) = a
+
+filename :: History -> Maybe String
+filename (History _ _ _) = Nothing
+filename (FileHistory _ _ _ n) = Just n
 
 data HistoryContext a = HistoryContext
     { hcRel :: Relation () a

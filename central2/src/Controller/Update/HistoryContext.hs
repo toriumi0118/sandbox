@@ -10,12 +10,8 @@ module Controller.Update.HistoryContext
         )
     , History
         ( History
-        , hTargetId
-        , hAction
         , FileHistory
-        , hfTargetId
-        , hfAction
-        , hfFileName
+        , DirHistory
         )
     , targetId
     , order
@@ -55,26 +51,35 @@ instance FromSql SqlValue FileAction where
 
 data History
     = History
-        { hOrder :: Int64
-        , hTargetId :: Int32
-        , hAction :: FileAction
+        { _hOrder :: Int64
+        , _hTargetId :: Int32
+        , _hAction :: FileAction
         }
     | FileHistory
-        { hfOrder :: Int64
-        , hfTargetId :: Int32
-        , hfAction :: FileAction
-        , hfFileName :: String
+        { _hfOrder :: Int64
+        , _hfTargetId :: Int32
+        , _hfAction :: FileAction
+        , _hfFileName :: String
+        }
+    | DirHistory
+        { _hdOrder :: Int64
+        , _hdTargetId :: Int32
+        , _hdAction :: FileAction
+        , _hdDirName :: Maybe String
         }
 
 instance Eq History where
     History _ i1 _ == History _ i2 _ = i1 == i2
     FileHistory _ i1 _ _ == FileHistory _ i2 _ _ = i1 == i2
+    DirHistory _ i1 _ _ == DirHistory _ i2 _ _ = i1 == i2
     _ == _ = False
 
 instance Ord History where
     History _ i1 _ <= History _ i2 _ = i1 <= i2
     FileHistory _ i1 _ _ <= FileHistory _ i2 _ _ = i1 <= i2
     History _ _ _ <= FileHistory _ _ _ _ = True
+    History _ _ _ <= DirHistory _ _ _ _ = True
+    FileHistory _ _ _ _ <= DirHistory _ _ _ _ = True
     _ <= _ = False
 
 instance ProductConstructor (Int64 -> Int32 -> FileAction -> History) where
@@ -83,24 +88,31 @@ instance ProductConstructor (Int64 -> Int32 -> FileAction -> History) where
 instance ProductConstructor (Int64 -> Int32 -> FileAction -> String -> History) where
     productConstructor = FileHistory
 
+instance ProductConstructor (Int64 -> Int32 -> FileAction -> Maybe String -> History) where
+    productConstructor = DirHistory
+
 instance FromSql SqlValue History where
     recordFromSql = History <$> recordFromSql <*> recordFromSql <*> recordFromSql
 
 targetId :: History -> Int32
 targetId (History _ i _)       = i
 targetId (FileHistory _ i _ _) = i
+targetId (DirHistory _ i _ _) = i
 
 order :: History -> Int64
 order (History i _ _) = i
 order (FileHistory i _ _ _) = i
+order (DirHistory i _ _ _) = i
 
 action :: History -> FileAction
 action (History _ _ a) = a
 action (FileHistory _ _ a _) = a
+action (DirHistory _ _ a _) = a
 
 filename :: History -> Maybe String
 filename (History _ _ _) = Nothing
 filename (FileHistory _ _ _ n) = Just n
+filename (DirHistory _ _ _ n) = n
 
 data HistoryContext a = HistoryContext
     { hcRel :: Relation () a

@@ -8,12 +8,12 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char (toLower)
 import Data.Foldable (toList)
 import Data.List (isInfixOf, partition)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, isJust, fromJust)
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Text.Printf (printf)
 
 import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile, UpdatePdfDoc), FileType(..), HistoryId, store)
-import Controller.Update.HistoryContext (History(History, FileHistory, hfFileName), FileAction(DELETE, UPDATE), order, targetId, action, filename)
+import Controller.Update.HistoryContext (History(History, FileHistory, DirHistory), FileAction(DELETE, UPDATE), order, targetId, action, filename)
 
 createUpdateContent
     :: FileType -> FilePath -> History -> Maybe (HistoryId, UpdateContent)
@@ -25,6 +25,8 @@ createUpdateContent PRESENTATION path (History hid i act) = Just
     (hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")
 createUpdateContent PDF_DOC _ (FileHistory hid _ act n) = Just
     (hid, UpdatePdfDoc n PDF_DOC act)
+createUpdateContent TOPIC n (DirHistory hid _ act _) = Just
+    (hid, UpdatePdfDoc n TOPIC act)
 createUpdateContent typ path (FileHistory hid i a n) = Just
     (hid, UpdateOfficeFile n typ a (fromIntegral i) path)
 createUpdateContent _ _ _ = Nothing
@@ -65,6 +67,20 @@ checkFileOrDirectory path = liftIO (doesFileExist path) >>= bool
     (return File) 
     (bool Directory NotExist <$> liftIO (doesDirectoryExist path))
 
+-- TODO?: includePath
+recursiveFillupUpdateContent :: (MonadIO m, Applicative m)
+    => FileType -> [(FilePath, History)] -> DataProvider m ()
+recursiveFillupUpdateContent t fhs = mapM checkFile fhs >>= mapM_ f
+  where
+    checkFile fh = (,) <$> checkFileOrDirectory (fst fh) <*> return fh
+    f (NotExist, (path, _)) = fail $ "Update file not found: " ++ path
+    f (File, (path, h)) = if "gitkeeper" `isInfixOf` path
+        then return ()
+        else store $ toList $ createUpdateContent t path h
+    f (Directory, (path, h)) = do
+        cs <- liftIO $ getDirectoryContents path
+        mapM_ (\c -> checkFile (c, h) >>= f) cs
+
 updatedFile :: (Applicative m, MonadIO m) => FileType -> DataProvider m ()
 updatedFile t@PRESENTATION = do
     fhs <- map ((,) <$> filePath t <*> id) <$> getHistories
@@ -74,21 +90,36 @@ updatedFile t@PRESENTATION = do
         $ catMaybes
         $ map (uncurry $ createUpdateContent t)
         $ filter isUpdate hs
-    -- XXX: includePath
-    mapM checkFile fhs >>= mapM_ f
+    recursiveFillupUpdateContent t fhs
   where
     isUpdate (_, h) = action h == UPDATE
-    checkFile fh = (,) <$> checkFileOrDirectory (fst fh) <*> return fh
-    f (NotExist, (path, _)) = fail $ "Update file not found: " ++ path
-    f (File, (path, h)) = if "gitkeeper" `isInfixOf` path
-        then return ()
-        else store $ toList $ createUpdateContent t path h
-    f (Directory, (path, h)) = do
-        cs <- liftIO $ getDirectoryContents path
-        mapM_ (\c -> checkFile (c, h) >>= f) cs
-updatedFile TOPIC = undefined -- XXX: dir
+updatedFile t@TOPIC = do
+    (hs, dels) <- partition ((== DELETE) . action)
+        . filter (isJust . filename)
+        <$> getHistories
+    ds <- fmap catMaybes $ forM dels $ \h -> do
+        case filename h of
+            Nothing -> fail "not reached"
+            Just n  -> if n == ""
+                then fail $ "Can't create content(history id=" ++ show (order h) ++ "). Change dir_name or action."
+                else return $ createUpdateContent t n h
+    store ds
+    let (upds, hs') = partition ((== UPDATE) . action)
+            $ filter (maybe False (/= "") . filename) hs
+    store
+        . catMaybes
+        . map (uncurry (createUpdateContent t) . f)
+        $ upds
+    recursiveFillupUpdateContent t $ map f hs'
+  where
+    f h =
+        ( fromJust (filename h)
+        , DirHistory (order h) (targetId h) DELETE (filename h)
+        )
 updatedFile t@PDF_DOC = do
-    (hs, dels) <- partition fDelete . filter notIgnore <$> getHistories
+    (hs, dels) <- partition ((== DELETE) . action)
+        . filter (maybe False (/= "ignore") . filename)
+        <$> getHistories
     let (ds1, ds2) = partition (maybe False (/= "") . filename) dels
     forM ds2 $ \h ->
         fail $ "can't sync: hisotry_id=" ++ show (order h)
@@ -96,10 +127,6 @@ updatedFile t@PDF_DOC = do
     mapM_ checkFile hs
     store $ catMaybes $ map (createUpdateContent t "") $ ds1 ++ hs
   where
-    notIgnore (FileHistory _ _ _ fname) = fname /= "ignore"
-    notIgnore _ = False
-    fDelete (FileHistory _ _ DELETE _) = True
-    fDelete _ = False
     checkFile h = maybe
         (fail $ "file not exist: id=" ++ show (order h))
         (\n -> do
@@ -110,13 +137,16 @@ updatedFile t@PDF_DOC = do
                 (fail $ "'" ++ path ++ "' is direcotry")
         ) $ filename h
 updatedFile t = do
-    (hs, uc) <- deleteAction t . map ((,) <$> filePath t <*> id)
+    (hs, uc) <- deleteAction t
+        . map ((,) <$> filePath t <*> id)
         <$> getHistories
     store uc
-    mapM_ checkFile $ map (\(dir, h) -> dir ++ "/" ++ hfFileName h) hs
+    mapM_ checkFile
+        $ map (\(dir, h) -> (\n -> dir ++ "/" ++ n) <$> (filename h)) hs
     store $ catMaybes $ map (uncurry $ createUpdateContent t) hs
   where
-    checkFile file = checkFileOrDirectory file >>= fileOrDir
+    checkFile Nothing     = fail "Update file not found."
+    checkFile (Just file) = checkFileOrDirectory file >>= fileOrDir
         (return ())
         (fail $ "Update file not found: " ++ file)
         (return ())

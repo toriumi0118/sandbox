@@ -81,6 +81,11 @@ data UpdateContent
         , type_2 :: FileType
         , action_3 :: FileAction
         }
+    | UpdateTopic
+        { name_3 :: String
+        , type_3 :: FileType
+        , action_4 :: FileAction
+        }
 
 instance Eq UpdateContent where
     (UpdateData i1 a1 t1 _ _) == (UpdateData i2 a2 t2 _ _) =
@@ -88,6 +93,7 @@ instance Eq UpdateContent where
     (UpdateOfficeFile n1 t1 _ i1 s1) == (UpdateOfficeFile n2 t2 _ i2 s2) =
         n1 == n2 && t1 == t2 && i1 == i2 && s1 == s2
     (UpdatePdfDoc n1 t1 _) == (UpdatePdfDoc n2 t2 _) = n1 == n2 && t1 == t2
+    (UpdateTopic n1 t1 _) == (UpdateTopic n2 t2 _) = n1 == n2 && t1 == t2
     _ == _ = False
 
 instance Ord UpdateContent where
@@ -96,10 +102,13 @@ instance Ord UpdateContent where
     (UpdateOfficeFile n1 t1 _ i1 s1) <= (UpdateOfficeFile n2 t2 _ i2 s2) =
         n1 <= n2 && t1 <= t2 && i1 <= i2 && s1 <= s2
     (UpdatePdfDoc n1 t1 _) <= (UpdatePdfDoc n2 t2 _) = n1 <= n2 && t1 <= t2
+    (UpdateTopic n1 t1 _) <= (UpdateTopic n2 t2 _) = n1 <= n2 && t1 <= t2
+    (UpdateOfficeFile _ _ _ _ _) <= (UpdatePdfDoc _ _ _) = True
+    (UpdatePdfDoc _ _ _) <= (UpdateOfficeFile _ _ _ _ _) = False
     (UpdateData _ _ _ _ _) <= _ = True
     _ <= (UpdateData _ _ _ _ _) = False
-    _ <= (UpdatePdfDoc _ _ _) = True
-    (UpdatePdfDoc _ _ _) <= _ = False
+    _ <= (UpdateTopic _ _ _) = True
+    (UpdateTopic _ _ _) <= _ = False
 
 toJSON' :: [(UpdateResponseKey, Value)] -> Value
 toJSON' = toJSON . Map.mapKeys show . Map.fromList
@@ -122,6 +131,14 @@ instance ToJSON UpdateContent where
         , (FILE_URL, toJSON (if a == DELETE
             then ""
             else ("/dataupdate/updatefile/pdfdoc?fineName=" ++ n)))
+        , (FILE_ACTION, toJSON a)
+        ]
+    toJSON (UpdateTopic n t a) = toJSON'
+        [ (FILE_NAME, toJSON n)
+        , (FILE_TYPE, toJSON t)
+        , (FILE_URL, toJSON (if a == DELETE
+            then ""
+            else ("/dataupdate/updatefile/topic?fineName=" ++ n)))
         , (FILE_ACTION, toJSON a)
         ]
 

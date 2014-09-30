@@ -11,13 +11,13 @@ import Control.Monad.Trans.Class (lift)
 import Data.Aeson (ToJSON, toJSON)
 import Data.Int (Int32)
 import Data.List (partition)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromJust, isNothing)
 import Database.HDBC (SqlValue)
 import Database.Record (FromSql)
 import qualified Safe
 
 import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, UpdateContent(UpdateData), HistoryId)
-import Controller.Update.HistoryContext (History(History, hTargetId, hAction, FileHistory), FileAction(DELETE, UPDATE))
+import Controller.Update.HistoryContext (History(History, FileHistory, DirHistory), FileAction(DELETE, UPDATE), order, targetId, action)
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
@@ -32,7 +32,7 @@ classify :: (a -> Int32) -> [History] -> [a]
 classify _ []     _      = []
 classify k (h:hs) []     = (h, Nothing):classify k hs []
 classify k (h:hs) (o:os)
-    | hTargetId h == k o = (h, Just o):classify k hs os
+    | targetId h == k o = (h, Just o):classify k hs os
     | otherwise          = (h, Nothing):classify k hs (o:os)
 
 deleteData :: (MonadIO m, Functor m)
@@ -68,17 +68,16 @@ toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     -> TableContext a
     -> (History, Maybe a)
     -> m [(HistoryId, UpdateContent)]
-toUpdateData _ _ ((FileHistory _ _ _ _), _) = fail "Unsupported file history"
-toUpdateData c ctx ((History hid i DELETE), _      ) = deleteData c ctx hid i
-toUpdateData c ctx ((History hid i UPDATE), Nothing) = deleteData c ctx hid i
-toUpdateData _ _   (_                 , Nothing) = return []
-toUpdateData _ (TableContext _ k _ t pk fs _) ((History hid _ act), Just o) =
-    return [(hid, UpdateData
-        (fromIntegral $ k o)
-        act
+toUpdateData c ctx@(TableContext _ k _ t pk fs _) (h, mo)
+    | action h == DELETE              = deleteData c ctx (order h) (targetId h)
+    | action h == UPDATE && isJust mo = deleteData c ctx (order h) (targetId h)
+    | isNothing mo                    = return []
+    | otherwise                       = return [(order h, UpdateData
+        (fromIntegral $ k $ fromJust mo)
+        (action h)
         t
         pk
-        [toJSON fs, toJSON [o]]
+        [toJSON fs, toJSON [fromJust mo]]
         )]
 
 type DeviceId = Int32
@@ -100,23 +99,24 @@ updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => TableContext a -> DataProvider m ()
 updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
     hs <- map convHis <$> getHistories
-    let (del1, oth) = partition ((==) DELETE . hAction) hs
+    let (del1, oth) = partition ((==) DELETE . action) hs
     conn <- getConnection
     (del2, os) <- lift $ partition (isJust . snd) . classify k oth <$> case mp of
         NewsParam p' p -> liftIO p >>=
-            Query.runQuery conn (Query.inList p' k' $ map hTargetId oth)
+            Query.runQuery conn (Query.inList p' k' $ map targetId oth)
         TopicParam Nothing  _ ->
-            Query.runQuery conn (Query.inList rel k' $ map hTargetId oth) ()
+            Query.runQuery conn (Query.inList rel k' $ map targetId oth) ()
         TopicParam (Just d) f -> do
-            as <- Query.runQuery conn (Query.inList rel k' $ map hTargetId oth) ()
+            as <- Query.runQuery conn (Query.inList rel k' $ map targetId oth) ()
             when (null as) $ fail "Topics are not exist."
             filterM (f conn $ pos K.latitude K.longitude <$> getKyotaku conn d) as
         NoParam ->
-            Query.runQuery conn (Query.inList rel k' $ map hTargetId oth) ()
+            Query.runQuery conn (Query.inList rel k' $ map targetId oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
             ++ map (\((History o i _), _) -> ((History o i DELETE), Nothing)) del2
     lift (concat <$> mapM (toUpdateData conn ctx) os') >>= store
   where
     convHis (FileHistory i t a _) = History i t a
+    convHis (DirHistory i t a _) = History i t a
     convHis h@(History _ _ _) = h

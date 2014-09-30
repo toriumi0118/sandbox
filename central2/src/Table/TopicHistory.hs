@@ -8,7 +8,7 @@ import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(DirHistory))
 import DataSource (defineTable)
 
 defineTable "topic_history"
@@ -20,4 +20,4 @@ historyContext = HistoryContext
     topicHistory
     id'
     V.topicId
-    (\h -> History |$| h ! id' |*| h ! topicId' |*| (read |$| h ! action'))
+    (\h -> DirHistory |$| h ! id' |*| h ! topicId' |*| (read |$| h ! action') |*| h ! topicDir')

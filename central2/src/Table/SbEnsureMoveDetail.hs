@@ -1,25 +1,24 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.ServiceBuilding where
+module Table.SbEnsureMoveDetail where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
 import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
-defineTable "service_building"
-deriveJSON defaultOptions ''ServiceBuilding
-mkFields ''ServiceBuilding
+defineTable "sb_ensure_move_detail"
+deriveJSON defaultOptions ''SbEnsureMoveDetail
+mkFields ''SbEnsureMoveDetail
 
-tableContext :: TableContext ServiceBuilding
+tableContext :: TableContext SbEnsureMoveDetail
 tableContext = TableContext
-    serviceBuilding
-    (fromIntegral . sbId)
-    (fromIntegral |$| sbId')
-    "service_building"
+    sbEnsureMoveDetail
+    sbId
+    sbId'
+    "sb_ensure_move_detail"
     "sb_id"
     fields
     NoParam

@@ -1,25 +1,24 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.ServiceBuilding where
+module Table.RelSbShortStay where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
 import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
-defineTable "service_building"
-deriveJSON defaultOptions ''ServiceBuilding
-mkFields ''ServiceBuilding
+defineTable "rel_sb_short_stay"
+deriveJSON defaultOptions ''RelSbShortStay
+mkFields ''RelSbShortStay
 
-tableContext :: TableContext ServiceBuilding
+tableContext :: TableContext RelSbShortStay
 tableContext = TableContext
-    serviceBuilding
-    (fromIntegral . sbId)
-    (fromIntegral |$| sbId')
-    "service_building"
+    relSbShortStay
+    sbId
+    sbId'
+    "rel_sb_short_stay"
     "sb_id"
     fields
     NoParam

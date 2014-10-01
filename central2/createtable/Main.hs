@@ -102,10 +102,14 @@ tableContext = TableContext
     relKeyBase = headLower $ toModuleName keyName
     relKeyName = if moduleName `elem` intList
         then [i|(fromIntegral . ${relKeyBase})|]
-        else relKeyBase
+        else if moduleName `elem` maybeIntList
+            then [i|(fromIntegral . fromJust . ${relKeyBase})|]
+            else relKeyBase
     relKeyName' = if moduleName `elem` intList
         then "(fromIntegral |$| " ++ relKeyBase ++ "')"
-        else relKeyBase ++ "'"
+        else if moduleName `elem` maybeIntList
+            then "(fromIntegral . fromJust |$| " ++ relKeyBase ++ "')"
+            else relKeyBase ++ "'"
     exts = extensions
         [ "TemplateHaskell"
         , "MultiParamTypeClasses"
@@ -113,10 +117,13 @@ tableContext = TableContext
         ]
     exmods = intercalate "\n" $ catMaybes $
         Just "import Data.Aeson.TH (deriveJSON, defaultOptions)"
-        :(if moduleName `elem` intList
+        :(if moduleName `elem` maybeIntList
+            then Just "import Data.Maybe (fromJust)"
+            else Nothing)
+        :(if moduleName `elem` (intList ++ maybeIntList)
             then Just "import Database.Relational.Query ((|$|))"
             else Nothing)
-        :(if relKeyBase == "id"
+        :(if relKeyBase == "id" || moduleName `elem` idList
             then Just "import Prelude hiding (id)"
             else Nothing)
         :[]
@@ -133,4 +140,63 @@ intList =
     , "OfficeImageCom"
     , "OfficePdf"
     , "Catalog"
+    , "ServiceBuilding"
+    , "ServiceBuildingTrail"
+    , "RelSbUtilityExpenses"
+    , "RelSrvPrice"
+    , "ServiceBuildingAppealPoint"
+    , "ServiceBuildingBathSrv"
+    , "ServiceBuildingCommonFee"
+    , "ServiceBuildingEnv"
+    , "ServiceBuildingHouseworkSrv"
+    , "ServiceBuildingImageCom"
+    , "ServiceBuildingKeepHealthSrv"
+    , "ServiceBuildingMealHelpSrv"
+    , "ServiceBuildingMealSrv"
+    , "ServiceBuildingMimamoriSrv"
+    , "ServiceBuildingRent"
+    , "ServiceBuildingShortStay"
+    , "ServiceBuildingTrial"
+    , "RelSbRoomFacility"
+    , "RelSbRoomType"
+    , "RelSbRoomPrice"
+    , "RelSbRoutineSrv"
+    , "ServiceBuildingRoom"
+    , "ServiceBuildingRoomPriceType"
+    , "ServiceBuildingRoomType"
+    , "RelSbMealCook"
+    , "RelSbMealDietician"
+    , "RelSbMealMealType"
+    , "RelSbMealPlace"
+    , "RelSbMealDietMeal"
+    , "RelSbMealVegetarian"
+    , "RelSbMimamoriEmergencyCallMethod"
+    , "RelSbMimamoriEmergencyCallPlace"
+    , "RelSbMimamoriProvideDays"
+    , "RelSbMimamoriProvideHours"
+    , "RelSbMimamoriStaff"
+    , "RelSbKeepHealthRehab"
+    , "RelSbKeepHealthMedical"
+    , "RelSbDetail"
+    , "RelSbBathBathType"
+    , "RelSbAdditionalSrv"
+    , "RelProvideFrom"
+    ]
+
+maybeIntList :: [String]
+maybeIntList =
+    [ "ServiceBuildingOtherExpense"
+    , "ServiceBuildingUtilityExpenses"
+    ]
+
+idList :: [String]
+idList =
+    [ "ServiceBuildingUtilityExpenses"
+    , "ServiceBuildingOtherExpense"
+    , "ServiceBuildingRoom"
+    , "ServiceBuildingRoomPriceType"
+    , "ServiceBuildingRoomType"
+    , "ServiceBuildingCommonFee"
+    , "RelSbRoutineSrv"
+    , "RelSbAdditionalSrv"
     ]

@@ -1,25 +1,26 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.ServiceBuilding where
+module Table.RelSbRoutineSrv where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query ((|$|))
+import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
-defineTable "service_building"
-deriveJSON defaultOptions ''ServiceBuilding
-mkFields ''ServiceBuilding
+defineTable "rel_sb_routine_srv"
+deriveJSON defaultOptions ''RelSbRoutineSrv
+mkFields ''RelSbRoutineSrv
 
-tableContext :: TableContext ServiceBuilding
+tableContext :: TableContext RelSbRoutineSrv
 tableContext = TableContext
-    serviceBuilding
+    relSbRoutineSrv
     (fromIntegral . sbId)
     (fromIntegral |$| sbId')
-    "service_building"
+    "rel_sb_routine_srv"
     "sb_id"
     fields
     NoParam

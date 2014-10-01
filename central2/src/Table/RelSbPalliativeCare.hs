@@ -1,25 +1,24 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.ServiceBuilding where
+module Table.RelSbPalliativeCare where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query ((|$|))
 
 import Controller.Types.Class ()
 import Controller.Update.TableContext (TableContext(TableContext), TableContextParam(NoParam))
 import DataSource (defineTable)
 import TH (mkFields)
 
-defineTable "service_building"
-deriveJSON defaultOptions ''ServiceBuilding
-mkFields ''ServiceBuilding
+defineTable "rel_sb_palliative_care"
+deriveJSON defaultOptions ''RelSbPalliativeCare
+mkFields ''RelSbPalliativeCare
 
-tableContext :: TableContext ServiceBuilding
+tableContext :: TableContext RelSbPalliativeCare
 tableContext = TableContext
-    serviceBuilding
-    (fromIntegral . sbId)
-    (fromIntegral |$| sbId')
-    "service_building"
+    relSbPalliativeCare
+    sbId
+    sbId'
+    "rel_sb_palliative_care"
     "sb_id"
     fields
     NoParam

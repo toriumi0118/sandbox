@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Table.ServiceBuilding where
+module Table.RelSbMealDietMeal where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query ((|$|))
@@ -10,16 +10,16 @@ import Controller.Update.TableContext (TableContext(TableContext), TableContextP
 import DataSource (defineTable)
 import TH (mkFields)
 
-defineTable "service_building"
-deriveJSON defaultOptions ''ServiceBuilding
-mkFields ''ServiceBuilding
+defineTable "rel_sb_meal_diet_meal"
+deriveJSON defaultOptions ''RelSbMealDietMeal
+mkFields ''RelSbMealDietMeal
 
-tableContext :: TableContext ServiceBuilding
+tableContext :: TableContext RelSbMealDietMeal
 tableContext = TableContext
-    serviceBuilding
+    relSbMealDietMeal
     (fromIntegral . sbId)
     (fromIntegral |$| sbId')
-    "service_building"
+    "rel_sb_meal_diet_meal"
     "sb_id"
     fields
     NoParam

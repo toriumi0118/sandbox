@@ -36,6 +36,7 @@ import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
 import qualified Controller.Update.OfficeCase
+import qualified Controller.Update.ServiceBuilding
 import Controller.Update.UpdateData (updatedData)
 import Controller.Update.UpdateFile (updatedFile)
 import DataSource (Connection)
@@ -53,6 +54,7 @@ import qualified Table.OfficePdf
 import qualified Table.OfficePresentationHistory as OPH
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
+import qualified Table.ServiceBuildingHistory as SBH
 import qualified Table.TopicHistory as TH
 import qualified Table.Topic
 import qualified Util
@@ -121,11 +123,9 @@ contents (Auth deviceId) = do
         addData DATA KH.historyContext Controller.Update.Kyotaku.updateData
         addData DATA OAH.historyContext $ updatedData Table.OfficePdf.tableContext
         addData DATA OCH.historyContext Controller.Update.OfficeCase.updateData
-        addData DATA OSPH.historyContext
-            $ updatedData Table.OfficePdf.tableContext
+        addData DATA OSPH.historyContext $ updatedData Table.OfficePdf.tableContext
         addData DATA NH.historyContext $ updatedData Table.NewsHead.tableContext
-        addData DATA TH.historyContext
-            $ updatedData $ Table.Topic.tableContext dev
+        addData DATA TH.historyContext $ updatedData $ Table.Topic.tableContext dev
         addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
         addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
         addData FILES OIH.historyContext $ updatedFile IMAGE
@@ -136,6 +136,7 @@ contents (Auth deviceId) = do
         addData FILES TH.historyContext $ updatedFile TOPIC
         addData FILES PDH.historyContext $ updatedFile PDF_DOC
         addData FILES CH.historyContext $ updatedFile CATALOG
+        addData DATA SBH.historyContext Controller.Update.ServiceBuilding.updateData
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

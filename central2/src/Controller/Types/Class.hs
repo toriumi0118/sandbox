@@ -4,6 +4,7 @@
 module Controller.Types.Class where
 
 import Data.Aeson (FromJSON(..), ToJSON(..))
+import Data.Maybe (fromJust)
 import Data.Int (Int64, Int32)
 import Data.Time (NominalDiffTime, UTCTime(..), Day(..), addUTCTime)
 import Database.Relational.Query
@@ -30,3 +31,5 @@ instance ProductConstructor (Int32 -> Int64) where
     productConstructor = fromIntegral
 instance ProductConstructor (Int64 -> Int32) where
     productConstructor = fromIntegral
+instance ProductConstructor (Maybe Int64 -> Int32) where
+    productConstructor = fromIntegral . fromJust

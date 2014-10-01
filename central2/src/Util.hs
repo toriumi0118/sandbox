@@ -6,8 +6,10 @@ module Util
     , clientError
     , unique
     , (?:)
+    , replaceSuffix
     ) where
 
+import Control.Applicative
 import Control.Exception (SomeException, catch)
 import qualified Data.Set as Set
 import Web.Scotty (ActionM)
@@ -31,3 +33,16 @@ Nothing ?: xs = xs
 Just x  ?: xs = x:xs
 
 infixr 7 ?:
+
+replaceSuffix :: String -> String -> String -> Maybe String
+replaceSuffix pat rep str = (++ rep) <$> stripSuffix pat str
+
+stripSuffix :: String -> String -> Maybe String
+stripSuffix pat str = reverse <$> stripPrefix (reverse pat) (reverse str)
+
+stripPrefix :: String -> String -> Maybe String
+stripPrefix []    cs = Just cs
+stripPrefix (_:_) [] = Nothing
+stripPrefix (p:ps) (c:cs)
+    | p == c    = stripPrefix ps cs
+    | otherwise = Nothing

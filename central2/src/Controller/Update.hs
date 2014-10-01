@@ -135,6 +135,7 @@ contents (Auth deviceId) = do
         addData FILES OSPH.historyContext $ updatedFile SP_PRICE
         addData FILES TH.historyContext $ updatedFile TOPIC
         addData FILES PDH.historyContext $ updatedFile PDF_DOC
+        addData FILES CH.historyContext $ updatedFile CATALOG
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

@@ -3,33 +3,42 @@ module Controller.Update.UpdateFile
     ) where
 
 import Control.Applicative
+import Control.Arrow (second)
 import Control.Monad (forM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char (toLower)
 import Data.Foldable (toList)
 import Data.List (isInfixOf, partition)
-import Data.Maybe (catMaybes, isJust, fromJust)
+import Data.Maybe (isJust, fromJust, fromMaybe)
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Text.Printf (printf)
 
-import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile, UpdatePdfDoc), FileType(..), HistoryId, store)
+import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile, UpdatePdfDoc, UpdateCatalog), FileType(..), HistoryId, store)
 import Controller.Update.HistoryContext (History(History, FileHistory, DirHistory), FileAction(DELETE, UPDATE), order, targetId, action, filename)
+import Util (replaceSuffix)
+
+pdfToPng :: FilePath -> FilePath
+pdfToPng path = fromMaybe path $ replaceSuffix ".pdf" ".png" path
 
 createUpdateContent
-    :: FileType -> FilePath -> History -> Maybe (HistoryId, UpdateContent)
-createUpdateContent PRESENTATION _ (History hid i DELETE) = Just
-    (hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")
-createUpdateContent PRESENTATION _ (History hid i UPDATE) = Just
-    (hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")
-createUpdateContent PRESENTATION path (History hid i act) = Just
-    (hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")
-createUpdateContent PDF_DOC _ (FileHistory hid _ act n) = Just
-    (hid, UpdatePdfDoc n PDF_DOC act)
-createUpdateContent TOPIC n (DirHistory hid _ act _) = Just
-    (hid, UpdatePdfDoc n TOPIC act)
-createUpdateContent typ path (FileHistory hid i a n) = Just
-    (hid, UpdateOfficeFile n typ a (fromIntegral i) path)
-createUpdateContent _ _ _ = Nothing
+    :: FileType -> FilePath -> History -> [(HistoryId, UpdateContent)]
+createUpdateContent PRESENTATION _ (History hid i DELETE) =
+    [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
+createUpdateContent PRESENTATION _ (History hid i UPDATE) =
+    [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
+createUpdateContent PRESENTATION path (History hid i act) =
+    [(hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")]
+createUpdateContent TOPIC n (DirHistory hid _ act _) =
+    [(hid, UpdatePdfDoc n TOPIC act)]
+createUpdateContent PDF_DOC _ (FileHistory hid _ act n) =
+    [(hid, UpdatePdfDoc n PDF_DOC act)]
+createUpdateContent CATALOG _ (FileHistory hid _ act n) =
+    [ (hid, UpdateCatalog n CATALOG act)
+    , (hid, UpdateCatalog (pdfToPng n) CATALOG act)
+    ]
+createUpdateContent typ path (FileHistory hid i a n) =
+    [(hid, UpdateOfficeFile n typ a (fromIntegral i) path)]
+createUpdateContent _ _ _ = []
 
 deleteAction
     :: FileType
@@ -37,7 +46,7 @@ deleteAction
     -> ([(FilePath, History)], [(HistoryId, UpdateContent)])
 deleteAction t = go [] []
   where
-    go rs cs [] = (rs, reverse $ catMaybes cs)
+    go rs cs [] = (rs, reverse $ concat cs)
     go rs cs ((_, History _ _ _):hs)                   = go rs cs hs
     go rs cs ((path, h@(FileHistory _ _ DELETE _)):hs) =
         go rs (createUpdateContent t path h:cs) hs
@@ -46,6 +55,7 @@ deleteAction t = go [] []
 filePath :: FileType -> History -> FilePath
 filePath TOPIC = const "data/topic"
 filePath PDF_DOC = const "data/pdf"
+filePath CATALOG = const "data/catalog"
 filePath typ
     = printf ("data/office/office%d/" ++ map toLower (show typ))
     . targetId
@@ -87,8 +97,7 @@ updatedFile t@PRESENTATION = do
     let (hs, uc) = deleteAction t fhs
     store uc
     store
-        $ catMaybes
-        $ map (uncurry $ createUpdateContent t)
+        $ concatMap (uncurry $ createUpdateContent t)
         $ filter isUpdate hs
     recursiveFillupUpdateContent t fhs
   where
@@ -97,20 +106,19 @@ updatedFile t@TOPIC = do
     (hs, dels) <- partition ((== DELETE) . action)
         . filter (isJust . filename)
         <$> getHistories
-    ds <- fmap catMaybes $ forM dels $ \h -> do
+    ds <- fmap concat $ forM dels $ \h -> do
         case filename h of
             Nothing -> fail "not reached"
             Just n  -> if n == ""
-                then fail $ "Can't create content(history id=" ++ show (order h) ++ "). Change dir_name or action."
+                then fail $ "topic can't create content(history id=" ++ show (order h) ++ "). Change dir_name or action."
                 else return $ createUpdateContent t n h
     store ds
-    let (upds, hs') = partition ((== UPDATE) . action)
-            $ filter (maybe False (/= "") . filename) hs
-    store
-        . catMaybes
-        . map (uncurry (createUpdateContent t) . f)
-        $ upds
-    recursiveFillupUpdateContent t $ map f hs'
+    let (upds, hs') = partition ((== UPDATE) . action . snd)
+            . map f
+            . filter (maybe False (/= "") . filename)
+            $ hs
+    store $ concatMap (uncurry $ createUpdateContent t) upds
+    recursiveFillupUpdateContent t hs'
   where
     f h =
         ( fromJust (filename h)
@@ -122,20 +130,37 @@ updatedFile t@PDF_DOC = do
         <$> getHistories
     let (ds1, ds2) = partition (maybe False (/= "") . filename) dels
     forM ds2 $ \h ->
-        fail $ "can't sync: hisotry_id=" ++ show (order h)
+        fail $ "pdf_doc can't sync: hisotry_id=" ++ show (order h)
                 ++ " path=" ++ show (filename h)
     mapM_ checkFile hs
-    store $ catMaybes $ map (createUpdateContent t "") $ ds1 ++ hs
+    store $ concatMap (createUpdateContent t "") $ ds1 ++ hs
   where
     checkFile h = maybe
-        (fail $ "file not exist: id=" ++ show (order h))
+        (fail $ "pdf_doc file is not exist: history id=" ++ show (order h))
         (\n -> do
             let path = filePath t h ++ "/" ++ n
             checkFileOrDirectory path >>= fileOrDir
-                (fail $ "file not exist: filename=" ++ path)
+                (fail $ "file is not exist: filename=" ++ path)
                 (return ())
                 (fail $ "'" ++ path ++ "' is direcotry")
         ) $ filename h
+updatedFile t@CATALOG = do
+    (hs, dels) <- partition ((== DELETE) . action) <$> getHistories
+    ds <- fmap concat $ forM dels $ \h -> if maybe False (/= "") (filename h)
+        then return $ createUpdateContent t "" h
+        else fail $ "catalog can't sync contents(history id=" ++ show (order h) ++ "). Change file_path or action."
+    store ds
+    let hs' = filter (maybe False (/= "ignore") . filename) hs
+    let files = map ((,) <$> id <*> (fromJust . filename)) hs'
+    mapM_ (uncurry checkFile) $ files ++ map (second pdfToPng) files
+    store $ concatMap (createUpdateContent t "") hs'
+  where
+    checkFile h n = checkFileOrDirectory path >>= fileOrDir
+        (fail $ "catalog file is not exist: filename=" ++ path)
+        (return ())
+        (fail $ "'" ++ path ++ "' is direcotry")
+      where
+        path = filePath t h ++ "/" ++ n
 updatedFile t = do
     (hs, uc) <- deleteAction t
         . map ((,) <$> filePath t <*> id)
@@ -143,7 +168,7 @@ updatedFile t = do
     store uc
     mapM_ checkFile
         $ map (\(dir, h) -> (\n -> dir ++ "/" ++ n) <$> (filename h)) hs
-    store $ catMaybes $ map (uncurry $ createUpdateContent t) hs
+    store $ concatMap (uncurry $ createUpdateContent t) hs
   where
     checkFile Nothing     = fail "Update file not found."
     checkFile (Just file) = checkFileOrDirectory file >>= fileOrDir

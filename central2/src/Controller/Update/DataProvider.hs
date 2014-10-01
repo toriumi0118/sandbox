@@ -63,29 +63,29 @@ instance ToJSON FileType where
 
 data UpdateContent
     = UpdateData
-        { index :: Integer
-        , action :: FileAction
-        , table :: TableName
-        , pkColumn :: PkColumn
-        , data_ :: [Value]
-        }
+        Integer -- index
+        FileAction
+        TableName
+        PkColumn
+        [Value] -- data
     | UpdateOfficeFile
-        { name :: String
-        , type_ :: FileType
-        , action_2 :: FileAction
-        , officeId :: Integer
-        , subDir :: String
-        }
+        String -- name
+        FileType
+        FileAction
+        Integer -- office_id
+        String -- subDir
     | UpdatePdfDoc
-        { name_2 :: String
-        , type_2 :: FileType
-        , action_3 :: FileAction
-        }
+        String -- name
+        FileType
+        FileAction
     | UpdateTopic
-        { name_3 :: String
-        , type_3 :: FileType
-        , action_4 :: FileAction
-        }
+        String -- name
+        FileType
+        FileAction
+    | UpdateCatalog
+        String -- name
+        FileType
+        FileAction
 
 instance Eq UpdateContent where
     (UpdateData i1 a1 t1 _ _) == (UpdateData i2 a2 t2 _ _) =
@@ -94,6 +94,7 @@ instance Eq UpdateContent where
         n1 == n2 && t1 == t2 && i1 == i2 && s1 == s2
     (UpdatePdfDoc n1 t1 _) == (UpdatePdfDoc n2 t2 _) = n1 == n2 && t1 == t2
     (UpdateTopic n1 t1 _) == (UpdateTopic n2 t2 _) = n1 == n2 && t1 == t2
+    (UpdateCatalog n1 t1 _) == (UpdateCatalog n2 t2 _) = n1 == n2 && t1 == t2
     _ == _ = False
 
 instance Ord UpdateContent where
@@ -103,15 +104,37 @@ instance Ord UpdateContent where
         n1 <= n2 && t1 <= t2 && i1 <= i2 && s1 <= s2
     (UpdatePdfDoc n1 t1 _) <= (UpdatePdfDoc n2 t2 _) = n1 <= n2 && t1 <= t2
     (UpdateTopic n1 t1 _) <= (UpdateTopic n2 t2 _) = n1 <= n2 && t1 <= t2
+    (UpdateCatalog n1 t1 _) <= (UpdateCatalog n2 t2 _) = n1 <= n2 && t1 <= t2
+
     (UpdateOfficeFile _ _ _ _ _) <= (UpdatePdfDoc _ _ _) = True
     (UpdatePdfDoc _ _ _) <= (UpdateOfficeFile _ _ _ _ _) = False
+    (UpdateOfficeFile _ _ _ _ _) <= (UpdateTopic _ _ _) = True
+    (UpdatePdfDoc _ _ _) <= (UpdateTopic _ _ _) = True
+    (UpdateTopic _ _ _) <= (UpdateOfficeFile _ _ _ _ _) = False
+    (UpdateTopic _ _ _) <= (UpdatePdfDoc _ _ _) = False
+
     (UpdateData _ _ _ _ _) <= _ = True
     _ <= (UpdateData _ _ _ _ _) = False
-    _ <= (UpdateTopic _ _ _) = True
-    (UpdateTopic _ _ _) <= _ = False
+    _ <= (UpdateCatalog _ _ _) = True
+    (UpdateCatalog _ _ _) <= _ = False
 
 toJSON' :: [(UpdateResponseKey, Value)] -> Value
 toJSON' = toJSON . Map.mapKeys show . Map.fromList
+
+updateFile
+    :: String
+    -> FileType
+    -> FileAction
+    -> String
+    -> [(UpdateResponseKey, Value)]
+updateFile name typ act path =
+    [ (FILE_NAME, toJSON name)
+    , (FILE_TYPE, toJSON typ)
+    , (FILE_URL, toJSON (if act == DELETE
+        then ""
+        else ("/dataupdate/updatefile/" ++ path ++ "?fileName=" ++ name)))
+    , (FILE_ACTION, toJSON act)
+    ]
 
 instance ToJSON UpdateContent where
     toJSON (UpdateData i a t p d) = toJSON'
@@ -125,22 +148,9 @@ instance ToJSON UpdateContent where
         [ (OFFICE_KIND, toJSON $ show DAY_SERVICE)
         , (OFFICE_ID, toJSON o)
         ]
-    toJSON (UpdatePdfDoc n t a) = toJSON'
-        [ (FILE_NAME, toJSON n)
-        , (FILE_TYPE, toJSON t)
-        , (FILE_URL, toJSON (if a == DELETE
-            then ""
-            else ("/dataupdate/updatefile/pdfdoc?fineName=" ++ n)))
-        , (FILE_ACTION, toJSON a)
-        ]
-    toJSON (UpdateTopic n t a) = toJSON'
-        [ (FILE_NAME, toJSON n)
-        , (FILE_TYPE, toJSON t)
-        , (FILE_URL, toJSON (if a == DELETE
-            then ""
-            else ("/dataupdate/updatefile/topic?fineName=" ++ n)))
-        , (FILE_ACTION, toJSON a)
-        ]
+    toJSON (UpdatePdfDoc n t a) = toJSON' $ updateFile n t a "pdfdoc"
+    toJSON (UpdateTopic n t a) = toJSON' $ updateFile n t a "topic"
+    toJSON (UpdateCatalog n t a) = toJSON' $ updateFile n t a "catalog"
 
 type HistoryId = Int64
 

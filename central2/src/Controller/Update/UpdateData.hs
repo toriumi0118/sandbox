@@ -17,7 +17,7 @@ import Database.Record (FromSql)
 import qualified Safe
 
 import Controller.Update.DataProvider (DataProvider, getConnection, getHistories, store, UpdateContent(UpdateData), HistoryId)
-import Controller.Update.HistoryContext (History(History, FileHistory, DirHistory), FileAction(DELETE, UPDATE), order, targetId, action)
+import Controller.Update.HistoryContext (History, FileAction(DELETE, UPDATE), order, targetId, targetPkValue, action)
 import Controller.Update.TableContext (TableContext(..), TableContextParam(NoParam, NewsParam, TopicParam), pos)
 import DataSource (Connection)
 import qualified Query
@@ -38,11 +38,10 @@ classify k (h:hs) (o:os)
 deleteData :: (MonadIO m, Functor m)
     => Connection
     -> TableContext a
-    -> HistoryId
-    -> Int32 -- ^ office id
+    -> History
     -> m [(HistoryId, UpdateContent)]
-deleteData conn ctx@(TableContext _ _ _ tabName keyName _ (NewsParam _ _)) hid oid = do
-    ds <- deleteData conn ctx{param = NoParam} hid oid
+deleteData conn ctx@(TableContext _ _ _ tabName keyName _ (NewsParam _ _)) h = do
+    ds <- deleteData conn ctx{param = NoParam} h
     r1 <- f <$> Query.runQuery conn (Query.byKey NB.newsBody NB.id') (fromIntegral oid)
     r2 <- f <$> Query.runQuery conn (Query.byKey NOR.newsOfficeRel NOR.newsHeadId') (fromIntegral oid)
     return $ fmap w r2 ?: fmap w r1 ?: ds
@@ -50,18 +49,19 @@ deleteData conn ctx@(TableContext _ _ _ tabName keyName _ (NewsParam _ _)) hid o
     f (a:_) = Just $
         UpdateData (fromIntegral oid) DELETE tabName keyName [toJSON a]
     f []    = Nothing
-    w = (,) hid
-deleteData _ (TableContext _ _ _ tabName keyName _ _) hid oid =
-    return [(hid, UpdateData
-        oid'
+    w = (,) (order h)
+    oid = targetId h
+deleteData _ (TableContext _ _ _ tabName keyName _ _) h =
+    return [(order h, UpdateData
+        oid
         DELETE
         tabName
         keyName
-        [toJSON [keyName], toJSON [oid']]
+        [toJSON [keyName], toJSON [targetPkValue h]]
         )]
   where
-    oid' :: Integer
-    oid' = fromIntegral oid
+    oid :: Integer
+    oid = fromIntegral $ targetId h
 
 toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     => Connection
@@ -69,8 +69,8 @@ toUpdateData :: (MonadIO m, Functor m, ToJSON a)
     -> (History, Maybe a)
     -> m [(HistoryId, UpdateContent)]
 toUpdateData c ctx@(TableContext _ k _ t pk fs _) (h, mo)
-    | action h == DELETE              = deleteData c ctx (order h) (targetId h)
-    | action h == UPDATE && isJust mo = deleteData c ctx (order h) (targetId h)
+    | action h == DELETE              = deleteData c ctx h
+    | action h == UPDATE && isJust mo = deleteData c ctx h
     | isNothing mo                    = return []
     | otherwise                       = return [(order h, UpdateData
         (fromIntegral $ k $ fromJust mo)
@@ -98,8 +98,7 @@ getKyotaku conn devId =
 updatedData :: (Functor m, MonadIO m, FromSql SqlValue a, ToJSON a)
     => TableContext a -> DataProvider m ()
 updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
-    hs <- map convHis <$> getHistories
-    let (del1, oth) = partition ((==) DELETE . action) hs
+    (del1, oth) <- partition ((==) DELETE . action) <$> getHistories
     conn <- getConnection
     (del2, os) <- lift $ partition (isJust . snd) . classify k oth <$> case mp of
         NewsParam p' p -> liftIO p >>=
@@ -114,9 +113,5 @@ updatedData ctx@(TableContext rel k k' _ _ _ mp) = do
             Query.runQuery conn (Query.inList rel k' $ map targetId oth) ()
     let os' = os
             ++ map (\d -> (d, Nothing)) del1
-            ++ map (\((History o i _), _) -> ((History o i DELETE), Nothing)) del2
+            ++ map (\(h, _) -> (h{action = DELETE}, Nothing)) del2
     lift (concat <$> mapM (toUpdateData conn ctx) os') >>= store
-  where
-    convHis (FileHistory i t a _) = History i t a
-    convHis (DirHistory i t a _) = History i t a
-    convHis h@(History _ _ _) = h

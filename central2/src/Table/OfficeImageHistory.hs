@@ -3,12 +3,11 @@
 module Table.OfficeImageHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(FileHistory))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
 import DataSource (defineTable)
 
 defineTable "office_image_history"
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     officeImageHistory
     id'
     V.officeImageId
-    (\h -> FileHistory |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action') |*| h ! fileName')
+    (\h -> History (id h) (officeId h) Nothing (read $ action h) (Just $ fileName h) Nothing)

@@ -3,7 +3,6 @@
 module Table.ServiceBuildingHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     serviceBuildingHistory
     id'
     V.serviceBuildingId
-    (\h -> History |$| h ! id' |*| h ! sbId' |*| (read |$| h ! action'))
+    (\h -> History (id h) (sbId h) (Just $ sbId h) (read $ action h) Nothing Nothing)

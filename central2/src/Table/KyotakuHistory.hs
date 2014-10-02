@@ -3,7 +3,6 @@
 module Table.KyotakuHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     kyotakuHistory
     id'
     V.kyotakuId
-    (\h -> History |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> History (id h) (officeId h) (Just $ officeId h) (read $ action h) Nothing Nothing)

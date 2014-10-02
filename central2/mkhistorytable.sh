@@ -203,3 +203,5 @@
 	rel_sb_infections \
 	rel_sb_change_care_manager \
 	service_building_image_com
+
+./dist/build/createtable/createtable -s id service_building_room_type_img

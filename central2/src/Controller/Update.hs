@@ -31,7 +31,7 @@ import Auth (Auth(Auth))
 import Controller.Types.UpdateReq (UpdateReq(..))
 import Controller.Types.VersionupHisIds (VersionupHisIds)
 import Controller.Update.DataProvider (DataProvider, runDataProvider, UpdateResponseKey(DATA, FILES), FileType(..))
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext, hcPk, hcSelect), History)
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History, hcOrder)
 import qualified Controller.Update.Kyotaku
 import qualified Controller.Update.PdfDoc
 import qualified Controller.Update.Office
@@ -65,14 +65,14 @@ history
     :: HistoryContext a
     -> Relation () a -- ^ テーブルのRelation
     -> Pi a Int64 -- ^ from toで指定するキー
-    -> Relation (Int64, Int64) History
+    -> Relation (Int64, Int64) a
 history hc historyRelation k = relation' $ do
     h <- query historyRelation
     (ph, ()) <- placeholder $ \range -> wheres $
         (h ! k .>. range ! fst') `and'`
         (h ! k .<. range ! snd')
-    asc $ h ! hcPk hc
-    return (ph, (hcSelect hc) h)
+    asc $ h ! hcOrder hc
+    return (ph, h)
 
 -- | 指定したテーブルからfrom,toの間に更新されたエントリの
 --   target_id,actionの組のリストを取得
@@ -82,8 +82,10 @@ targetHistories :: (MonadIO m, Functor m, FromSql SqlValue a)
     -> VersionupHisIds -- ^ from
     -> VersionupHisIds -- ^ to
     -> m [History]
-targetHistories conn ctx@(HistoryContext r k' idk _) from to = Util.unique <$>
-    Query.runQuery conn (history ctx r k') (curry (bimap oid oid) from to)
+targetHistories conn ctx@(HistoryContext r k' idk f) from to
+    = Util.unique
+    . map f
+    <$> Query.runQuery conn (history ctx r k') (curry (bimap oid oid) from to)
   where
     oid = fromIntegral . idk
 
@@ -95,7 +97,7 @@ version = do
     when (from == to) $ fail "already updated"
     return (from, to)
 
-addData
+addContent
     :: (MonadIO m, Functor m, FromSql SqlValue a,
         MonadTrans t, MonadState (Map String [Value]) (t m),
         MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
@@ -103,7 +105,7 @@ addData
     -> HistoryContext a
     -> DataProvider m ()
     -> t m ()
-addData urkey ctx udata = do
+addContent urkey ctx udata = do
     (conn, from, to) <- Reader.ask 
     hs <- lift $ targetHistories conn ctx from to
     lift (runDataProvider conn hs udata)
@@ -114,29 +116,39 @@ addData urkey ctx udata = do
       where
         k' = show k
 
+addData, addFile
+    :: (MonadIO m, Functor m, FromSql SqlValue a,
+        MonadTrans t, MonadState (Map String [Value]) (t m),
+        MonadReader (Connection, VersionupHisIds, VersionupHisIds) (t m))
+    => HistoryContext a
+    -> DataProvider m ()
+    -> t m ()
+addData = addContent DATA
+addFile = addContent FILES
+
 contents :: Auth -> ActionM ()
 contents (Auth deviceId) = do
     (from, to) <- version
     Query.query (\conn -> flip State.execStateT Map.empty $
             flip Reader.runReaderT (conn, from, to) $ do
-        addData DATA OH.historyContext Controller.Update.Office.updateData
-        addData DATA KH.historyContext Controller.Update.Kyotaku.updateData
-        addData DATA OAH.historyContext $ updatedData Table.OfficePdf.tableContext
-        addData DATA OCH.historyContext Controller.Update.OfficeCase.updateData
-        addData DATA OSPH.historyContext $ updatedData Table.OfficePdf.tableContext
-        addData DATA NH.historyContext $ updatedData Table.NewsHead.tableContext
-        addData DATA TH.historyContext $ updatedData $ Table.Topic.tableContext dev
-        addData DATA PDH.historyContext Controller.Update.PdfDoc.updateData
-        addData DATA CH.historyContext $ updatedData Table.Catalog.tableContext
-        addData FILES OIH.historyContext $ updatedFile IMAGE
-        addData FILES OPH.historyContext $ updatedFile PRESENTATION
-        addData FILES OAH.historyContext $ updatedFile AD
-        addData FILES OCH.historyContext $ updatedFile CASE
-        addData FILES OSPH.historyContext $ updatedFile SP_PRICE
-        addData FILES TH.historyContext $ updatedFile TOPIC
-        addData FILES PDH.historyContext $ updatedFile PDF_DOC
-        addData FILES CH.historyContext $ updatedFile CATALOG
-        addData DATA SBH.historyContext Controller.Update.ServiceBuilding.updateData
+        addData OH.historyContext Controller.Update.Office.updateData
+        addData KH.historyContext Controller.Update.Kyotaku.updateData
+        addData OAH.historyContext $ updatedData Table.OfficePdf.tableContext
+        addData OCH.historyContext Controller.Update.OfficeCase.updateData
+        addData OSPH.historyContext $ updatedData Table.OfficePdf.tableContext
+        addData NH.historyContext $ updatedData Table.NewsHead.tableContext
+        addData TH.historyContext $ updatedData $ Table.Topic.tableContext dev
+        addData PDH.historyContext Controller.Update.PdfDoc.updateData
+        addData CH.historyContext $ updatedData Table.Catalog.tableContext
+        addFile OIH.historyContext $ updatedFile IMAGE
+        addFile OPH.historyContext $ updatedFile PRESENTATION
+        addFile OAH.historyContext $ updatedFile AD
+        addFile OCH.historyContext $ updatedFile CASE
+        addFile OSPH.historyContext $ updatedFile SP_PRICE
+        addFile TH.historyContext $ updatedFile TOPIC
+        addFile PDH.historyContext $ updatedFile PDF_DOC
+        addFile CH.historyContext $ updatedFile CATALOG
+        addData SBH.historyContext Controller.Update.ServiceBuilding.updateData
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

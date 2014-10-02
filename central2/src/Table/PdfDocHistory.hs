@@ -3,12 +3,11 @@
 module Table.PdfDocHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import qualified Controller.Types.VersionupHisIds as V
-import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(FileHistory))
+import Controller.Update.HistoryContext (HistoryContext(HistoryContext), History(History))
 import DataSource (defineTable)
 
 defineTable "pdf_doc_history"
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     pdfDocHistory
     id'
     V.pdfDocId
-    (\h -> FileHistory |$| h ! id' |*| h ! pdfDocId' |*| (read |$| h ! action') |*| h ! filePath')
+    (\h -> History (id h) (pdfDocId h) (Just $ pdfDocId h) (read $ action h) (Just $ filePath h) Nothing)

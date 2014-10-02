@@ -3,7 +3,6 @@
 module Table.OfficePresentationHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     officePresentationHistory
     id'
     V.officePresentationId
-    (\h -> History |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> History (id h) (officeId h) Nothing (read $ action h) Nothing Nothing)

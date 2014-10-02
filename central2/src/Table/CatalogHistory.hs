@@ -3,7 +3,6 @@
 module Table.CatalogHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -20,4 +19,4 @@ historyContext = HistoryContext
     catalogHistory
     id'
     V.catalogId
-    (\h -> History |$| h ! id' |*| h ! catalogId' |*| (read |$| h ! action'))
+    (\h -> History (id h) (catalogId h) (Just $ catalogId h) (read $ action h) (Just $ filePath h) Nothing)

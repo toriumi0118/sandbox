@@ -14,7 +14,7 @@ import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents
 import Text.Printf (printf)
 
 import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile, UpdatePdfDoc, UpdateCatalog), FileType(..), HistoryId, store)
-import Controller.Update.HistoryContext (History(History, FileHistory, DirHistory), FileAction(DELETE, UPDATE), order, targetId, action, filename)
+import Controller.Update.HistoryContext (History(History), FileAction(DELETE, UPDATE), order, targetId, action, filename)
 import Util (replaceSuffix)
 
 pdfToPng :: FilePath -> FilePath
@@ -22,21 +22,21 @@ pdfToPng path = fromMaybe path $ replaceSuffix ".pdf" ".png" path
 
 createUpdateContent
     :: FileType -> FilePath -> History -> [(HistoryId, UpdateContent)]
-createUpdateContent PRESENTATION _ (History hid i DELETE) =
+createUpdateContent PRESENTATION _ (History hid i _ DELETE _ _) =
     [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
-createUpdateContent PRESENTATION _ (History hid i UPDATE) =
+createUpdateContent PRESENTATION _ (History hid i _ UPDATE _ _) =
     [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
-createUpdateContent PRESENTATION path (History hid i act) =
+createUpdateContent PRESENTATION path (History hid i _ act _ _) =
     [(hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")]
-createUpdateContent TOPIC n (DirHistory hid _ act _) =
+createUpdateContent TOPIC n (History hid _ _ act _ _) =
     [(hid, UpdatePdfDoc n TOPIC act)]
-createUpdateContent PDF_DOC _ (FileHistory hid _ act n) =
+createUpdateContent PDF_DOC _ (History hid _ _ act (Just n) _) =
     [(hid, UpdatePdfDoc n PDF_DOC act)]
-createUpdateContent CATALOG _ (FileHistory hid _ act n) =
+createUpdateContent CATALOG _ (History hid _ _ act (Just n) _) =
     [ (hid, UpdateCatalog n CATALOG act)
     , (hid, UpdateCatalog (pdfToPng n) CATALOG act)
     ]
-createUpdateContent typ path (FileHistory hid i a n) =
+createUpdateContent typ path (History hid i _ a (Just n) _) =
     [(hid, UpdateOfficeFile n typ a (fromIntegral i) path)]
 createUpdateContent _ _ _ = []
 
@@ -47,8 +47,8 @@ deleteAction
 deleteAction t = go [] []
   where
     go rs cs [] = (rs, reverse $ concat cs)
-    go rs cs ((_, History _ _ _):hs)                   = go rs cs hs
-    go rs cs ((path, h@(FileHistory _ _ DELETE _)):hs) =
+    go rs cs ((_, History _ _ _ _ Nothing _):hs)                   = go rs cs hs
+    go rs cs ((path, h@(History _ _ _ DELETE _ _)):hs) =
         go rs (createUpdateContent t path h:cs) hs
     go rs cs (h:hs)                                    = go (h:rs) cs hs
 
@@ -120,10 +120,7 @@ updatedFile t@TOPIC = do
     store $ concatMap (uncurry $ createUpdateContent t) upds
     recursiveFillupUpdateContent t hs'
   where
-    f h =
-        ( fromJust (filename h)
-        , DirHistory (order h) (targetId h) DELETE (filename h)
-        )
+    f h = (fromJust (filename h), h{action = DELETE})
 updatedFile t@PDF_DOC = do
     (hs, dels) <- partition ((== DELETE) . action)
         . filter (maybe False (/= "ignore") . filename)

@@ -3,7 +3,6 @@
 module Table.OfficeHistory where
 
 import Data.Aeson.TH (deriveJSON, defaultOptions)
-import Database.Relational.Query hiding (id')
 import Prelude hiding (id)
 
 import Controller.Types.Class ()
@@ -15,15 +14,9 @@ defineTable "office_history"
 
 deriveJSON defaultOptions ''OfficeHistory
 
-instance Eq OfficeHistory where
-    a == b = officeId a == officeId b
-
-instance Ord OfficeHistory where
-    a <= b = officeId a <= officeId b
-
 historyContext :: HistoryContext OfficeHistory
 historyContext = HistoryContext
     officeHistory
     id'
     V.officeId
-    (\h -> History |$| h ! id' |*| h ! officeId' |*| (read |$| h ! action'))
+    (\h -> History (id h) (officeId h) (Just $ officeId h) (read $ action h) Nothing Nothing)

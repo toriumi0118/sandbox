@@ -55,6 +55,8 @@ import qualified Table.OfficePresentationHistory as OPH
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
 import qualified Table.ServiceBuildingHistory as SBH
+import qualified Table.ServiceBuildingRoomTypeImgHistory as SBRIH
+import qualified Table.ServiceBuildingRoomTypeImg
 import qualified Table.TopicHistory as TH
 import qualified Table.Topic
 import qualified Util
@@ -149,6 +151,7 @@ contents (Auth deviceId) = do
         addFile PDH.historyContext $ updatedFile PDF_DOC
         addFile CH.historyContext $ updatedFile CATALOG
         addData SBH.historyContext Controller.Update.ServiceBuilding.updateData
+        addData SBRIH.historyContext $ updatedData Table.ServiceBuildingRoomTypeImg.tableContext
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

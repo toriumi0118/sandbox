@@ -181,6 +181,7 @@ intList =
     , "RelSbBathBathType"
     , "RelSbAdditionalSrv"
     , "RelProvideFrom"
+    , "ServiceBuildingRoomTypeImg"
     ]
 
 maybeIntList :: [String]

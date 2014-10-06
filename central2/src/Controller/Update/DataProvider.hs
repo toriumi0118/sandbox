@@ -61,7 +61,7 @@ data OfficeKind
 
 data FileType
     = PRESENTATION | IMAGE | TOPIC | AD | CASE | SP_PRICE | PDF_DOC
-    | CATALOG | ROOM_IMG | SB FileType
+    | CATALOG | ROOM | SB FileType
   deriving (Eq, Ord, Read, Show)
 
 instance ToJSON FileType where

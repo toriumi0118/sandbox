@@ -36,8 +36,14 @@ createUpdateContent CATALOG _ (History hid _ _ act (Just n) _) =
     [ (hid, UpdateCatalog n CATALOG act)
     , (hid, UpdateCatalog (pdfToPng n) CATALOG act)
     ]
-createUpdateContent (SB ROOM_IMG) path (History hid i _ a (Just n) _) =
-    [(hid, UpdateServiceBuildingRoomTypeImg n ROOM_IMG a i path)]
+createUpdateContent (SB ROOM) path (History hid i _ a (Just n) _) =
+    [(hid, UpdateServiceBuildingRoomTypeImg n ROOM a i path)]
+createUpdateContent (SB PRESENTATION) _ (History hid i _ DELETE _ _) =
+    [(hid, UpdateServiceBuildingFile "" PRESENTATION DELETE i "presentation")]
+createUpdateContent (SB PRESENTATION) _ (History hid i _ UPDATE _ _) =
+    [(hid, UpdateServiceBuildingFile "" PRESENTATION DELETE i "presentation")]
+createUpdateContent (SB PRESENTATION) path (History hid i _ a _ _) =
+    [(hid, UpdateServiceBuildingFile path PRESENTATION a i "presentation")]
 createUpdateContent (SB typ) path (History hid i _ a (Just n) _) =
     [(hid, UpdateServiceBuildingFile n typ a i path)]
 createUpdateContent typ path (History hid i _ a (Just n) _) =
@@ -65,8 +71,6 @@ filePath :: FileType -> History -> FilePath
 filePath TOPIC = const "data/topic"
 filePath PDF_DOC = const "data/pdf"
 filePath CATALOG = const "data/catalog"
-filePath (SB ROOM_IMG)
-    = filePath' "data/servicebuilding/servicebuilding%d/room/" ROOM_IMG
 filePath (SB typ) = filePath' "data/servicebuilding/servicebuilding%d/" typ
 filePath typ = filePath' "data/office/office%d/" typ
 
@@ -101,8 +105,9 @@ recursiveFillupUpdateContent t fhs = mapM checkFile fhs >>= mapM_ f
         cs <- liftIO $ getDirectoryContents path
         mapM_ (\c -> checkFile (c, h) >>= f) cs
 
-updatedFile :: (Applicative m, MonadIO m) => FileType -> DataProvider m ()
-updatedFile t@PRESENTATION = do
+presentationFile :: (Applicative m, MonadIO m)
+    => FileType -> DataProvider m ()
+presentationFile t = do
     fhs <- map ((,) <$> filePath t <*> id) <$> getHistories
     let (hs, uc) = deleteAction t fhs
     store uc
@@ -112,6 +117,10 @@ updatedFile t@PRESENTATION = do
     recursiveFillupUpdateContent t fhs
   where
     isUpdate (_, h) = action h == UPDATE
+
+updatedFile :: (Applicative m, MonadIO m) => FileType -> DataProvider m ()
+updatedFile t@PRESENTATION = presentationFile t
+updatedFile t@(SB PRESENTATION) = presentationFile t
 updatedFile t@TOPIC = do
     (hs, dels) <- partition ((== DELETE) . action)
         . filter (isJust . filename)

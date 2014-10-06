@@ -36,6 +36,8 @@ createUpdateContent CATALOG _ (History hid _ _ act (Just n) _) =
     [ (hid, UpdateCatalog n CATALOG act)
     , (hid, UpdateCatalog (pdfToPng n) CATALOG act)
     ]
+createUpdateContent (SB ROOM_IMG) path (History hid i _ a (Just n) _) =
+    [(hid, UpdateServiceBuildingRoomTypeImg n ROOM_IMG a i path)]
 createUpdateContent (SB typ) path (History hid i _ a (Just n) _) =
     [(hid, UpdateServiceBuildingFile n typ a i path)]
 createUpdateContent typ path (History hid i _ a (Just n) _) =
@@ -49,21 +51,24 @@ deleteAction
 deleteAction t = go [] []
   where
     go rs cs [] = (rs, reverse $ concat cs)
-    go rs cs ((_, History _ _ _ _ Nothing _):hs)                   = go rs cs hs
+    go rs cs ((_, History _ _ _ _ Nothing _):hs)       = go rs cs hs
     go rs cs ((path, h@(History _ _ _ DELETE _ _)):hs) =
         go rs (createUpdateContent t path h:cs) hs
     go rs cs (h:hs)                                    = go (h:rs) cs hs
+
+filePath' :: String -> FileType -> History -> FilePath
+filePath' fmt typ
+    = printf (fmt ++ map toLower (show typ))
+    . targetId
 
 filePath :: FileType -> History -> FilePath
 filePath TOPIC = const "data/topic"
 filePath PDF_DOC = const "data/pdf"
 filePath CATALOG = const "data/catalog"
-filePath (SB typ)
-    = printf ("data/servicebuilding/servicebuilding%d/" ++ map toLower (show typ))
-    . targetId
-filePath typ
-    = printf ("data/office/office%d/" ++ map toLower (show typ))
-    . targetId
+filePath (SB ROOM_IMG)
+    = filePath' "data/servicebuilding/servicebuilding%d/room/" ROOM_IMG
+filePath (SB typ) = filePath' "data/servicebuilding/servicebuilding%d/" typ
+filePath typ = filePath' "data/office/office%d/" typ
 
 data FileOrDirectory = NotExist | File | Directory deriving (Eq)
 

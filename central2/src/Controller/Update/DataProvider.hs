@@ -80,6 +80,7 @@ data UpdateContent
     | UpdateTopic Name FileType FileAction
     | UpdateCatalog Name FileType FileAction
     | UpdateServiceBuildingFile Name FileType FileAction SbId SubDir
+    | UpdateServiceBuildingRoomTypeImg Name FileType FileAction SbId SubDir
 
 instance Eq UpdateContent where
     UpdateData i1 a1 t1 _ _ == UpdateData i2 a2 t2 _ _ =
@@ -90,6 +91,8 @@ instance Eq UpdateContent where
     UpdateTopic n1 t1 _ == UpdateTopic n2 t2 _ = n1 == n2 && t1 == t2
     UpdateCatalog n1 t1 _ == UpdateCatalog n2 t2 _ = n1 == n2 && t1 == t2
     UpdateServiceBuildingFile n1 t1 _ i1 s1 == UpdateServiceBuildingFile n2 t2 _ i2 s2 =
+        n1 == n2 && t1 == t2 && i1 == i2 && s1 == s2
+    UpdateServiceBuildingRoomTypeImg n1 t1 _ i1 s1 == UpdateServiceBuildingRoomTypeImg n2 t2 _ i2 s2 =
         n1 == n2 && t1 == t2 && i1 == i2 && s1 == s2
     _ == _ = False
 
@@ -106,6 +109,8 @@ instance Ord UpdateContent where
         mconcat [compare n1 n2, compare t1 t2]
     UpdateServiceBuildingFile n1 t1 _ i1 s1 `compare` UpdateServiceBuildingFile n2 t2 _ i2 s2 =
         mconcat [compare n1 n2, compare t1 t2, compare i1 i2, compare s1 s2]
+    UpdateServiceBuildingRoomTypeImg n1 t1 _ i1 s1 `compare` UpdateServiceBuildingRoomTypeImg n2 t2 _ i2 s2 =
+        mconcat [compare n1 n2, compare t1 t2, compare i1 i2, compare s1 s2]
 
     UpdateData _ _ _ _ _ `compare` _ = LT
     _ `compare` UpdateData _ _ _ _ _ = GT
@@ -117,6 +122,8 @@ instance Ord UpdateContent where
     _ `compare` UpdateTopic _ _ _ = GT
     UpdateCatalog _ _ _ `compare` _ = LT
     _ `compare` UpdateCatalog _ _ _ = GT
+    UpdateServiceBuildingFile _ _ _ _ _ `compare` _ = LT
+    _ `compare` UpdateServiceBuildingFile _ _ _ _ _ = GT
 
 toJSON' :: [(UpdateResponseKey, Value)] -> Value
 toJSON' = toJSON . Map.mapKeys show . Map.fromList
@@ -155,6 +162,8 @@ instance ToJSON UpdateContent where
     toJSON (UpdateTopic n t a) = updateFile n t a ["topic"]
     toJSON (UpdateCatalog n t a) = updateFile n t a ["catalog"]
     toJSON (UpdateServiceBuildingFile n t a i d) =
+        updateFile n t a ["SERVICE_BUILDING", show i, d]
+    toJSON (UpdateServiceBuildingRoomTypeImg n t a i d) =
         updateFile n t a ["SERVICE_BUILDING", show i, d]
 
 type HistoryId = Int64

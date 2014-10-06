@@ -154,6 +154,7 @@ contents (Auth deviceId) = do
         addData SBH.historyContext Controller.Update.ServiceBuilding.updateData
         addData SBRIH.historyContext $ updatedData Table.ServiceBuildingRoomTypeImg.tableContext
         addFile SBIH.historyContext $ updatedFile $ SB IMAGE
+        addFile SBIH.historyContext $ updatedFile $ SB ROOM_IMG
         error "tmp"
       ) >>= Scotty.json
   `catchError` \e -> do

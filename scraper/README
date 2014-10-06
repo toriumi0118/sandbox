@@ -1,0 +1,8 @@
+
+kaigokennsaku.jpのスクレーパー
+
+scrapyに基づいたので、実行するとこ、このコマンドを使ってください
+
+	scrapy crawl <spiderName>
+	
+	scrapy crawl basicSpider

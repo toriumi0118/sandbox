@@ -13,7 +13,7 @@ import Data.Maybe (isJust, fromJust, fromMaybe)
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Text.Printf (printf)
 
-import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(UpdateOfficeFile, UpdatePdfDoc, UpdateCatalog), FileType(..), HistoryId, store)
+import Controller.Update.DataProvider (DataProvider, getHistories, UpdateContent(..), FileType(..), HistoryId, store)
 import Controller.Update.HistoryContext (History(History), FileAction(DELETE, UPDATE), order, targetId, action, filename)
 import Util (replaceSuffix)
 
@@ -23,11 +23,11 @@ pdfToPng path = fromMaybe path $ replaceSuffix ".pdf" ".png" path
 createUpdateContent
     :: FileType -> FilePath -> History -> [(HistoryId, UpdateContent)]
 createUpdateContent PRESENTATION _ (History hid i _ DELETE _ _) =
-    [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
+    [(hid, UpdateOfficeFile "" PRESENTATION DELETE i "presentation")]
 createUpdateContent PRESENTATION _ (History hid i _ UPDATE _ _) =
-    [(hid, UpdateOfficeFile "" PRESENTATION DELETE (fromIntegral i) "presentation")]
+    [(hid, UpdateOfficeFile "" PRESENTATION DELETE i "presentation")]
 createUpdateContent PRESENTATION path (History hid i _ act _ _) =
-    [(hid, UpdateOfficeFile path PRESENTATION act (fromIntegral i) "presentation")]
+    [(hid, UpdateOfficeFile path PRESENTATION act i "presentation")]
 createUpdateContent TOPIC n (History hid _ _ act _ _) =
     [(hid, UpdatePdfDoc n TOPIC act)]
 createUpdateContent PDF_DOC _ (History hid _ _ act (Just n) _) =
@@ -36,8 +36,10 @@ createUpdateContent CATALOG _ (History hid _ _ act (Just n) _) =
     [ (hid, UpdateCatalog n CATALOG act)
     , (hid, UpdateCatalog (pdfToPng n) CATALOG act)
     ]
+createUpdateContent (SB typ) path (History hid i _ a (Just n) _) =
+    [(hid, UpdateServiceBuildingFile n typ a i path)]
 createUpdateContent typ path (History hid i _ a (Just n) _) =
-    [(hid, UpdateOfficeFile n typ a (fromIntegral i) path)]
+    [(hid, UpdateOfficeFile n typ a i path)]
 createUpdateContent _ _ _ = []
 
 deleteAction
@@ -56,6 +58,9 @@ filePath :: FileType -> History -> FilePath
 filePath TOPIC = const "data/topic"
 filePath PDF_DOC = const "data/pdf"
 filePath CATALOG = const "data/catalog"
+filePath (SB typ)
+    = printf ("data/servicebuilding/servicebuilding%d/" ++ map toLower (show typ))
+    . targetId
 filePath typ
     = printf ("data/office/office%d/" ++ map toLower (show typ))
     . targetId

@@ -6,6 +6,7 @@ import Data.Aeson.TH (deriveJSON, defaultOptions)
 import Database.Relational.Query
 import Data.Time.LocalTime (LocalTime)
 import Data.Int (Int32, Int64)
+import Prelude hiding (id)
 
 import Controller.Types.Class ()
 import DataSource (defineTable)

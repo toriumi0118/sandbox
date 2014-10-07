@@ -1,0 +1,160 @@
+{-# LANGUAGE FlexibleContexts #-}
+
+module Controller.Update.ServiceBuilding
+    ( updateData
+    ) where
+
+import Control.Monad.IO.Class (MonadIO)
+
+import Controller.Update.DataProvider (DataProvider)
+import Controller.Update.UpdateData (updatedData)
+import Table.RelProvideFrom
+import Table.RelSbAdditionalSrv
+import Table.RelSbArchitecture
+import Table.RelSbBath
+import Table.RelSbBathBathType
+import Table.RelSbChangeCareManager
+import Table.RelSbCompanyKind
+import Table.RelSbConcierge
+import Table.RelSbDementia
+import Table.RelSbDetail
+import Table.RelSbDrinkingArea
+import Table.RelSbEarthQuakeArchitecture
+import Table.RelSbEmergencyResponse
+import Table.RelSbEnsureMove
+import Table.RelSbInfections
+import Table.RelSbInfirm
+import Table.RelSbInnerFacility
+import Table.RelSbKeepHealthMedical
+import Table.RelSbKeepHealthRehab
+import Table.RelSbMealCook
+import Table.RelSbMealDietMeal
+import Table.RelSbMealDietician
+import Table.RelSbMealMealType
+import Table.RelSbMealPlace
+import Table.RelSbMealVegetarian
+import Table.RelSbMimamoriEmergencyCallMethod
+import Table.RelSbMimamoriEmergencyCallPlace
+import Table.RelSbMimamoriProvideDays
+import Table.RelSbMimamoriProvideHours
+import Table.RelSbMimamoriStaff
+import Table.RelSbOuterFacility
+import Table.RelSbPalliativeCare
+import Table.RelSbPayMethod
+import Table.RelSbPet
+import Table.RelSbRoomFacility
+import Table.RelSbRoomPrice
+import Table.RelSbRoutineSrv
+import Table.RelSbShortStay
+import Table.RelSbSmokingArea
+import Table.RelSbSocialAid
+import Table.RelSbSprinkler
+import Table.RelSbSupportBuilding
+import Table.RelSbTerminalCare
+import Table.RelSbTrial
+import Table.RelSbTvPhone
+import Table.RelSbUtilityExpenses
+import Table.RelSbViolence
+import Table.RelSbWander
+import Table.RelSrvPrice
+import Table.SbBusinessTime
+import Table.SbEnsureMoveDetail
+import Table.ServiceBuilding
+import Table.ServiceBuildingAppealPoint
+import Table.ServiceBuildingBathSrv
+import Table.ServiceBuildingCommonFee
+import Table.ServiceBuildingContract
+import Table.ServiceBuildingEnv
+import Table.ServiceBuildingHouseworkSrv
+import Table.ServiceBuildingImageCom
+import Table.ServiceBuildingInfectionsDetail
+import Table.ServiceBuildingKeepHealthSrv
+import Table.ServiceBuildingMealDeliverySrv
+import Table.ServiceBuildingMealHelpSrv
+import Table.ServiceBuildingMealSrv
+import Table.ServiceBuildingMimamoriSrv
+import Table.ServiceBuildingOtherExpense
+import Table.ServiceBuildingRent
+import Table.ServiceBuildingRoom
+import Table.ServiceBuildingRoomPriceType
+import Table.ServiceBuildingRoomType
+import Table.ServiceBuildingShortStay
+import Table.ServiceBuildingTrial
+import Table.ServiceBuildingUtilityExpenses
+
+updateData :: (MonadIO m, Functor m) => DataProvider m ()
+updateData = do
+    updatedData Table.ServiceBuilding.tableContext
+    updatedData Table.ServiceBuildingEnv.tableContext
+    updatedData Table.ServiceBuildingRent.tableContext
+    updatedData Table.ServiceBuildingMimamoriSrv.tableContext
+    updatedData Table.RelSbRoutineSrv.tableContext
+    updatedData Table.ServiceBuildingMealSrv.tableContext
+    updatedData Table.ServiceBuildingMealDeliverySrv.tableContext
+    updatedData Table.ServiceBuildingMealHelpSrv.tableContext
+    updatedData Table.ServiceBuildingBathSrv.tableContext
+    updatedData Table.ServiceBuildingHouseworkSrv.tableContext
+    updatedData Table.ServiceBuildingKeepHealthSrv.tableContext
+    updatedData Table.RelSbAdditionalSrv.tableContext
+    updatedData Table.RelSrvPrice.tableContext
+    updatedData Table.RelProvideFrom.tableContext
+    updatedData Table.RelSbDetail.tableContext
+    updatedData Table.RelSbSupportBuilding.tableContext
+    updatedData Table.RelSbEnsureMove.tableContext
+    updatedData Table.RelSbArchitecture.tableContext
+    updatedData Table.RelSbInnerFacility.tableContext
+    updatedData Table.RelSbOuterFacility.tableContext
+    updatedData Table.RelSbBath.tableContext
+    updatedData Table.RelSbEmergencyResponse.tableContext
+    updatedData Table.RelSbEarthQuakeArchitecture.tableContext
+    updatedData Table.RelSbConcierge.tableContext
+    updatedData Table.RelSbSprinkler.tableContext
+    updatedData Table.RelSbPet.tableContext
+    updatedData Table.RelSbTvPhone.tableContext
+    updatedData Table.RelSbPalliativeCare.tableContext
+    updatedData Table.RelSbTerminalCare.tableContext
+    updatedData Table.RelSbDementia.tableContext
+    updatedData Table.RelSbInfirm.tableContext
+    updatedData Table.RelSbSocialAid.tableContext
+    updatedData Table.RelSbMimamoriStaff.tableContext
+    updatedData Table.RelSbMimamoriProvideDays.tableContext
+    updatedData Table.RelSbMimamoriProvideHours.tableContext
+    updatedData Table.RelSbMimamoriEmergencyCallMethod.tableContext
+    updatedData Table.RelSbMimamoriEmergencyCallPlace.tableContext
+    updatedData Table.RelSbMealDietMeal.tableContext
+    updatedData Table.RelSbMealMealType.tableContext
+    updatedData Table.RelSbMealDietician.tableContext
+    updatedData Table.RelSbMealCook.tableContext
+    updatedData Table.RelSbMealPlace.tableContext
+    updatedData Table.RelSbMealVegetarian.tableContext
+    updatedData Table.RelSbBathBathType.tableContext
+    updatedData Table.RelSbKeepHealthMedical.tableContext
+    updatedData Table.RelSbKeepHealthRehab.tableContext
+    updatedData Table.ServiceBuildingRoomType.tableContext
+    updatedData Table.RelSbRoomFacility.tableContext
+    updatedData Table.ServiceBuildingRoom.tableContext
+    updatedData Table.ServiceBuildingCommonFee.tableContext
+    updatedData Table.RelSbRoomPrice.tableContext
+    updatedData Table.ServiceBuildingRoomPriceType.tableContext
+    updatedData Table.ServiceBuildingTrial.tableContext
+    updatedData Table.RelSbTrial.tableContext
+    updatedData Table.ServiceBuildingShortStay.tableContext
+    updatedData Table.RelSbShortStay.tableContext
+    updatedData Table.RelSbUtilityExpenses.tableContext
+    updatedData Table.ServiceBuildingUtilityExpenses.tableContext
+    updatedData Table.ServiceBuildingOtherExpense.tableContext
+    updatedData Table.SbEnsureMoveDetail.tableContext
+    updatedData Table.ServiceBuildingInfectionsDetail.tableContext
+    updatedData Table.ServiceBuildingContract.tableContext
+    updatedData Table.ServiceBuildingAppealPoint.tableContext
+    updatedData Table.SbBusinessTime.tableContext
+    updatedData Table.RelSbSmokingArea.tableContext
+    updatedData Table.RelSbDrinkingArea.tableContext
+    updatedData Table.RelSbPayMethod.tableContext
+    updatedData Table.ServiceBuildingOtherExpense.tableContext
+    updatedData Table.RelSbCompanyKind.tableContext
+    updatedData Table.RelSbWander.tableContext
+    updatedData Table.RelSbViolence.tableContext
+    updatedData Table.RelSbInfections.tableContext
+    updatedData Table.RelSbChangeCareManager.tableContext
+    updatedData Table.ServiceBuildingImageCom.tableContext

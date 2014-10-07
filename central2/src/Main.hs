@@ -2,6 +2,7 @@ module Main where
 
 import qualified Controller.Echo as Echo
 import qualified Controller.PostPv as PostPv
+import qualified Controller.Update as Update
 import qualified Controller.Version as Version
 import qualified Controller.VersionupResult as VersionupResult
 import Network.Wai.Middleware.RequestLogger (logStdout)
@@ -21,3 +22,5 @@ main = scotty 3000 $ do
     auth get "/postresult/results" VersionupResult.results
 
     auth get "/version/versionupinfo" Version.versionupInfo
+
+    auth get "/dataupdate/dataupdate" Update.contents

@@ -207,3 +207,5 @@
 ./dist/build/createtable/createtable -s id service_building_room_type_img
 
 ./dist/build/createtable/createtable -s id sb_pdf
+
+./dist/build/createtable/createtable -s id related_office

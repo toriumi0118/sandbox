@@ -54,6 +54,8 @@ import qualified Table.OfficePdf
 import qualified Table.OfficePresentationHistory as OPH
 import qualified Table.OfficeSpPriceHistory as OSPH
 import qualified Table.PdfDocHistory as PDH
+import qualified Table.RelatedOffice
+import qualified Table.RelatedOfficeHistory as ROH
 import qualified Table.SbAdHistory as SAH
 import qualified Table.SbPdf
 import qualified Table.ServiceBuildingHistory as SBH
@@ -160,7 +162,8 @@ contents (Auth deviceId) = do
         addFile SBIH.historyContext $ updatedFile $ SB ROOM
         addFile SBPH.historyContext $ updatedFile $ SB PRESENTATION
         addData SAH.historyContext $ updatedData Table.SbPdf.tableContext
-        error "tmp"
+        addFile SAH.historyContext $ updatedFile $ SB AD
+        addData ROH.historyContext $ updatedData Table.RelatedOffice.tableContext
       ) >>= Scotty.json
   `catchError` \e -> do
     liftIO $ print $ Scotty.showError e

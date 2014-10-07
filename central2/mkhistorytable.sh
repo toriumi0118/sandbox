@@ -205,3 +205,5 @@
 	service_building_image_com
 
 ./dist/build/createtable/createtable -s id service_building_room_type_img
+
+./dist/build/createtable/createtable -s id sb_pdf

@@ -182,6 +182,7 @@ intList =
     , "RelSbAdditionalSrv"
     , "RelProvideFrom"
     , "ServiceBuildingRoomTypeImg"
+    , "SbPdf"
     ]
 
 maybeIntList :: [String]
@@ -200,4 +201,5 @@ idList =
     , "ServiceBuildingCommonFee"
     , "RelSbRoutineSrv"
     , "RelSbAdditionalSrv"
+    , "SbPdf"
     ]

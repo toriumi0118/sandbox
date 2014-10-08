@@ -10,10 +10,7 @@ import java.io.IOException;
 public class CSVFileRead {
 
 	private final static String inputCsvFile = "C:\\Users\\Sagehari Maiko\\Documents\\11_home_care.csv";	//パス変える
-	private final static String outputCsvFile = "C:\\Users\\Sagehari Maiko\\Documents\\11_home_care_basicSpider.py";	//パス変える
-	private final static String type1 = ".innerHTML";
-	private final static String type2 = "\".attr(\"\"href\"\")\"";
-	private final static String type3 = "\".attr(\"\"alt\"\")\"";
+	private final static String outputCsvFile = "C:\\Users\\Sagehari Maiko\\Documents\\11_home_care_items.py";	//パス変える
 	
 	public static void main(String[] args) {
 		String line;
@@ -29,31 +26,20 @@ public class CSVFileRead {
 			
 			out.write("# -*- coding: utf-8 -*-");
 			out.newLine();
+			out.newLine();
+			out.write("# Define here the models for your scraped items");
+			out.newLine();
+			out.write("#");
+			out.newLine();
+			out.write("# See documentation in:");
+			out.newLine();
+			out.write("# http://doc.scrapy.org/en/latest/topics/items.html");
+			out.newLine();
+			out.newLine();
 			out.write("import scrapy");
 			out.newLine();
-			out.write("from scraper.util import *");
 			out.newLine();
-			out.write("from scraper.items import HoumonItem");
-			out.newLine();
-			out.write("from scrapy.contrib.spiders import CrawlSpider, Rule");
-			out.newLine();
-			out.write("from bs4 import BeautifulSoup");
-			out.newLine();
-			out.write("class BasicSpider(CrawlSpider):");
-			out.newLine();
-			out.newLine();
-			out.write("	name = \"basicSpider\"");
-			out.newLine();
-			out.write("	allowed_domains = [\"kaigokensaku.jp\"]");
-			out.newLine();
-			out.write("	start_urls = getStartUrls(110)");
-			out.newLine();
-			out.newLine();
-			out.write("	def parse(self, response):");
-			out.newLine();
-			out.write("		tree = BeautifulSoup(response.body)");
-			out.newLine();
-			out.write("		item = HoumonItem()");
+			out.write("class HoumonItem(scrapy.Item):");
 			out.newLine();
 			out.newLine();
 
@@ -63,20 +49,11 @@ public class CSVFileRead {
 				csvArray = line.split("\\,");
 				count++;
 				if(count > 5 && csvArray.length >= 10){
-					if(type1.equals(csvArray[9])){
-						out.write("		item['" + csvArray[1] + "'] = " + "getTextById(tree," + csvArray[8] + ")");
-					}else if(type2.equals(csvArray[9])){
-						out.write("		item['" + csvArray[1] + "'] = " + "getAttributeValueById(tree," + csvArray[8] + ",\"href\")");
-					}else if(type3.equals(csvArray[9])){
-						out.write("		item['" + csvArray[1] + "'] = " + "getAttributeValueById(tree," + csvArray[8] + ",\"alt\")");
-					}
+					out.write("	 " + csvArray[1] + " = scrapy.Field()");
 					//改行する
 					out.newLine();
 				}
 			}
-			out.newLine();
-			out.write(" yield item");
-			out.newLine();
 			
 		}catch(FileNotFoundException e){
 			e.printStackTrace();

@@ -16,6 +16,7 @@ data Config = Config
     , dbName :: Maybe String
     , dbUser :: Maybe String
     , dbPassword :: Maybe String
+    , dbSocket :: Maybe String
     }
   deriving (Show)
 

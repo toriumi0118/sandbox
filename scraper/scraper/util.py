@@ -2,6 +2,9 @@
 
 import requests
 import re
+import scrapy
+from scrapy.item import DictItem, Field
+
 
 def getTextById(tree,id):
     idString = "diff-c" + str(id)
@@ -15,6 +18,34 @@ def getAttributeValueById(tree,id,attribute):
     field = tree.find(diffid=idString)
     if field:
         return field.get(attribute)
+
+#def createItemClass(class_name, field_list):
+#    classString = "import scrapy\n\nclass "+class_name+"(scrapy.Item):\n"
+#    for field_name in field_list:
+#        classString = classString+"\t"+ field_name+"=scrapy.Field()\n"
+#    exec(classString)
+
+def create_item_class(class_name, field_list):
+    field_dict = {}
+    for field_name in field_list:
+        field_dict[field_name] = Field()
+
+
+    print field_dict
+
+    return type(class_name, (DictItem,), field_dict)
+
+
+def getColumnNamesFromCSV(path):
+  result = []
+  f = file(path)
+  for line in f:
+    csvArray = line.split(",")
+    if(csvArray[0].isdigit()):
+      result.append(csvArray[1])
+  f.close()
+  return result
+
 
 def getStartUrls(facilityType):
     results =[]

@@ -7,18 +7,27 @@
 
 import codecs
 import json
+from scrapy.contrib.exporter import JsonItemExporter, BaseItemExporter
 
 
 ## Methods overridden to allow writing utf-8 to json files
 
-class JsonWithEncodingPipeline(object):  
+class JsonWithEncodingPipeline(JsonItemExporter):  
     def __init__(self):
         self.file = codecs.open('scraped_data_utf8.json', 'w', encoding='utf-8')
+        self.file.write("[")
+        self.first_item = True
 
     def process_item(self, item, spider):
+    	if self.first_item:
+            self.first_item = False
+        else:
+            self.file.write(',\n')
+
         line = json.dumps(dict(item), ensure_ascii=False) + "\n" 
         self.file.write(line)
-        return item
+        return item 
 
-    def spider_closed(self, spider):
+    def close_spider(self, spider):
+    	self.file.write("]")
         self.file.close()

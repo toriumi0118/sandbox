@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.item import DictItem, Field
+from scrapy.utils.project import get_project_settings
 from  scrapy.contrib.loader import ItemLoader
 from scraper.util import *
 from scraper.items import GenericItem

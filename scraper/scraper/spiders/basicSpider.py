@@ -3,9 +3,8 @@ import scrapy
 from scrapy.item import DictItem, Field
 from  scrapy.contrib.loader import ItemLoader
 from scraper.util import *
-from scrapy.utils.project import get_project_settings
 from scraper.items import GenericItem
-from scrapy.contrib.spiders import CrawlSpider, Rule
+from scrapy.contrib.spiders import CrawlSpider
 from bs4 import BeautifulSoup
 
 
@@ -14,9 +13,8 @@ class BasicSpider(CrawlSpider):
     settings = get_project_settings()
     name = "basicSpider"
     allowed_domains = ["kaigokensaku.jp"]
-    start_urls = ("""http://www.kaigokensaku.jp/40/index.php?action_kouhyou_detail_2013_001_kani=true&JigyosyoCd=4071103990-00&PrefCd=40&VersionCd=001""",)    
     def __init__(self,serviceType=None):
-        #self.start_urls = getStartUrls(int(serviceType))
+        self.start_urls = getStartUrls(int(serviceType))
         self.path = ".\\scraper\\tableDefinitions\\"+serviceType+".csv"    
         self.tableDefinitions = file(self.path)
         self.plainFields =[]

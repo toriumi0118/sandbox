@@ -12,18 +12,11 @@ def getTextById(tree,id):
     if field:
         return field.text 
 
-
 def getAttributeValueById(tree,id,attribute):
     idString = "diff-c" + str(id)
     field = tree.find(diffid=idString)
     if field:
         return field.get(attribute)
-
-#def createItemClass(class_name, field_list):
-#    classString = "import scrapy\n\nclass "+class_name+"(scrapy.Item):\n"
-#    for field_name in field_list:
-#        classString = classString+"\t"+ field_name+"=scrapy.Field()\n"
-#    exec(classString)
 
 def create_item_class(class_name, field_list):
     field_dict = {}

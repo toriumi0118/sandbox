@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## Helpful functions to aid crawling
 
 import requests
@@ -16,14 +17,17 @@ def getAttributeValueById(tree,id,attribute):
     idString = "diff-c" + str(id)
     field = tree.find(diffid=idString)
     if field:
+      if field.get(attribute):
         return field.get(attribute)
+      elif field.contents:
+        return field.contents[0].get(attribute)
+    return u'データーなし'
+
 
 def create_item_class(class_name, field_list):
     field_dict = {}
     for field_name in field_list:
         field_dict[field_name] = Field()
-
-
     print field_dict
 
     return type(class_name, (DictItem,), field_dict)
@@ -62,7 +66,7 @@ def getStartUrls(facilityType):
             page = requests.post("http://www.kaigokensaku.jp/40/index.php?action_kouhyou_pref_search_list_list=true&PrefCd=40",
                           data=payload)
 
-            regex = re.compile(r"""\'url\'\:\'index.php\?action_kouhyou_detail_([0-9]+)_([0-9]+)+_kani=true\&amp\;JigyosyoCd=(.*?)\&amp\;PrefCd=40&amp\;VersionCd=([0-9]+)""")
+            regex = re.compile(r"""\'url\'\:\'index.php\?action_kouhyou_detail_([0-9]+)_([0-9]+)_kani=true\&amp\;JigyosyoCd=(.*?)\&amp\;PrefCd=40&amp\;VersionCd=([0-9]+)""")
 
             if not regex.findall(page.text): ## End of search results
                 break

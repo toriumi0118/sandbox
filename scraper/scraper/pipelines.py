@@ -13,8 +13,8 @@ from scrapy.contrib.exporter import JsonItemExporter, BaseItemExporter
 ## Methods overridden to allow writing utf-8 to json files
 
 class JsonWithEncodingPipeline(JsonItemExporter):  
-    def __init__(self,file):
-        self.file = codecs.open('file.name', 'w', encoding='utf-8')
+    def __init__(self):
+        self.file = codecs.open('ut8output.json', 'w', encoding='utf-8')
         self.file.write("[")
         self.first_item = True
 
@@ -24,7 +24,7 @@ class JsonWithEncodingPipeline(JsonItemExporter):
         else:
             self.file.write(',\n')
 
-        line = json.dumps(dict(item), ensure_ascii=False) + "\n" 
+        line = json.dumps(dict(item), ensure_ascii=False)
         self.file.write(line)
         return item 
 

@@ -15,10 +15,9 @@ import re
 class BasicSpider(CrawlSpider):
     settings = get_project_settings()
     name = "basicSpider"
-    start_urls = ("""http://www.kaigokensaku.jp/40/index.php?action_kouhyou_detail_2013_001_kani=true&JigyosyoCd=4071103990-00&PrefCd=40&VersionCd=001""",)    
     allowed_domains = ["kaigokensaku.jp"]
     def __init__(self,serviceType=None):
-        #self.start_urls = getStartUrls(int(serviceType))
+        self.start_urls = getStartUrls(int(serviceType))
         self.path = ".\\scraper\\tableDefinitions\\"+serviceType+".csv"    
         self.tableDefinitions = file(self.path)
         self.plainFields =[]

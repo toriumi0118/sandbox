@@ -8,30 +8,34 @@ import sys
 from tkFileDialog import askdirectory
 from operator import itemgetter
 
-
 def resize():
-    shrinkFactor = 4
     jpgQuality = qualitySlider.get()
     i = 0
     for filename in os.listdir(inputDirectory):
         im = Image.open(inputDirectory + filename)
-        targetDimensions = tuple(x/shrinkFactor for x in im.size)
+        (x,y) = im.size
+        if x>1000 and y>1000:
+            shrinkFactor = x/1000.0
+        else:
+            shrinkFactor = 1
+        targetDimensions = tuple(int(x/shrinkFactor) for x in im.size)
         smaller = im.resize(targetDimensions,Image.ANTIALIAS)
-
         smaller.save(outputDirectory + filename,'JPEG',quality=jpgQuality)
 
 
 def resizeToPng():
-    shrinkFactor = 4
-    jpgQuality = qualitySlider.get()
     i = 0
     for filename in os.listdir(inputDirectory):
         im = Image.open(inputDirectory + filename)
-        targetDimensions = tuple(x/shrinkFactor for x in im.size)
+        (x,y) = im.size
+        if x>1000 and y>1000:
+            shrinkFactor = x/1000.0
+        else:
+            shrinkFactor = 1
+        targetDimensions = tuple(int(x/shrinkFactor) for x in im.size)
         smaller = im.resize(targetDimensions,Image.ANTIALIAS)
-        outputFilename = filename.replace(".jpg",".png")
-
-        smaller.save(outputDirectory + outputFilename,'PNG',quality=jpgQuality)
+        outputFilename = filename[:-3] + "png"
+        smaller.save(outputDirectory + outputFilename,'PNG')
 
 def getCaptions():
     files = os.listdir(outputDirectory)

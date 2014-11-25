@@ -49,7 +49,13 @@ stringToSign verb md5 ctype date acc resource = traceShow a a
         ]
 
 signature :: SecretKey -> ByteString -> ByteString
-signature key = Base64.encode . toBytes . Hash.hmacAlg SHA256 key
+signature key
+    = Base64.encode
+    . toBytes
+    . Hash.hmacAlg SHA256 (fromEither key $ Base64.decode key)
+  where
+    fromEither _ (Right a) = a
+    fromEither a _         = a
 
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
 whenJust Nothing  _ = return ()

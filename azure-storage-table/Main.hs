@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators, DataKinds #-}
+
 module Main where
 
 import Crypto.Hash (SHA256(SHA256))
@@ -15,11 +17,12 @@ import Network.Http.Client (Connection, RequestBuilder, Hostname, Port, Method(.
 import qualified Network.Http.Client as Http
 import qualified OpenSSL.Session as SSL
 import qualified System.IO.Streams as Streams
-import Debug.Trace
+
+import Cloud.Azure.Storage.Core
 
 data AuthType = SharedKey | SharedKeyLite deriving (Show)
 type AccountName = ByteString
-type SecretKey = ByteString
+type AccountKey = ByteString
 type Signature = ByteString
 
 authorizationHeader :: AuthType -> AccountName -> Signature -> ByteString
@@ -28,7 +31,6 @@ authorizationHeader atype acc sig = BS.concat
 
 formatDate :: UnixTime -> ByteString
 formatDate = UnixTime.formatUnixTimeGMT UnixTime.webDateFormat
---formatDate = const "Fri, 21 Nov 2014 04:02:18 GMT"
 
 stringToSign
     :: Method
@@ -38,24 +40,23 @@ stringToSign
     -> AccountName
     -> ByteString -- ^ Resource
     -> ByteString
-stringToSign verb md5 ctype date acc resource = traceShow a a
-  where
-    a = BS.intercalate "\n"
-        [ BC.pack $ show verb
-        , fromMaybe "" md5
-        , fromMaybe "" ctype
-        , formatDate date
-        , BS.concat ["/", acc, resource]
-        ]
+stringToSign verb md5 ctype date acc resource = BS.intercalate "\n"
+    [ BC.pack $ show verb
+    , fromMaybe "" md5
+    , fromMaybe "" ctype
+    , formatDate date
+    , BS.concat ["/", acc, resource]
+    ]
 
-signature :: SecretKey -> ByteString -> ByteString
+fromEither :: a -> Either b a -> a
+fromEither _ (Right a) = a
+fromEither a _         = a
+
+signature :: AccountKey -> ByteString -> ByteString
 signature key
     = Base64.encode
     . toBytes
     . Hash.hmacAlg SHA256 (fromEither key $ Base64.decode key)
-  where
-    fromEither _ (Right a) = a
-    fromEither a _         = a
 
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
 whenJust Nothing  _ = return ()
@@ -63,7 +64,7 @@ whenJust (Just a) f = f a
 
 setHeadersForTable
     :: AccountName
-    -> SecretKey
+    -> AccountKey
     -> Hostname
     -> Method
     -> Maybe ByteString -- ^ Content-MD5
@@ -91,16 +92,17 @@ withConnection host port f = do
     sslContext <- SSL.context
     Http.withConnection (Http.openConnectionSSL sslContext host port) f
 
-main :: IO ()
-main = do
+runStorageTable
+    :: StorageAccount
+    -> Hostname
+    -> IO ()
+runStorageTable acc host = do
     time <- UnixTime.getUnixTime
-    let acc = "welmokpilog"
-    let host = acc <> ".table.core.windows.net"
     withConnection host 443 $ \conn -> do
         req <- Http.buildRequest $ do
             setHeadersForTable
-                acc
-                "LfXCQBPcj4u313vfz+mx+pGC2fWwnhAo+2UW5SVAnAqIjYBEPt76oievOM3LpV35BwYCYi6ufeSBRZCs/h3c8Q=="
+                (accountName acc)
+                (accountKey acc)
                 host
                 GET
                 Nothing
@@ -113,3 +115,11 @@ main = do
         Http.receiveResponse conn $ \res i -> do
             print res
             Streams.read i >>= maybe (return ()) BC.putStrLn
+
+main :: IO ()
+main = do
+    let acc = storageAccount
+            "welmokpilog"
+            "LfXCQBPcj4u313vfz+mx+pGC2fWwnhAo+2UW5SVAnAqIjYBEPt76oievOM3LpV35BwYCYi6ufeSBRZCs/h3c8Q=="
+    let host = accountName acc <> ".table.core.windows.net"
+    runStorageTable acc host
